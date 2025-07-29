@@ -1,0 +1,71 @@
+type NFT @entity {
+  id: ID!
+  tokenId: BigInt!
+  creator: User!
+  owner: User!
+  name: String!
+  description: String!
+  image: String!
+  tokenURI: String!
+  price: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  transactions: [Transaction!]! @derivedFrom(field: "nft")
+  transfers: [Transfer!]! @derivedFrom(field: "nft")
+}
+
+type User @entity {
+  id: ID! # wallet address
+  address: Bytes!
+  createdNFTs: [NFT!]! @derivedFrom(field: "creator")
+  ownedNFTs: [NFT!]! @derivedFrom(field: "owner")
+  transactions: [Transaction!]! @derivedFrom(field: "user")
+  transfersFrom: [Transfer!]! @derivedFrom(field: "from")
+  transfersTo: [Transfer!]! @derivedFrom(field: "to")
+  totalNFTsCreated: BigInt!
+  totalNFTsOwned: BigInt!
+  totalTransactions: BigInt!
+  firstTransactionAt: BigInt!
+  lastTransactionAt: BigInt!
+}
+
+type Transaction @entity {
+  id: ID! # transaction hash
+  type: TransactionType!
+  nft: NFT!
+  user: User!
+  from: User
+  to: User
+  price: BigInt
+  gasUsed: BigInt!
+  gasPrice: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Transfer @entity {
+  id: ID! # transaction hash + log index
+  nft: NFT!
+  from: User!
+  to: User!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  gasUsed: BigInt!
+}
+
+enum TransactionType {
+  MINT
+  TRANSFER
+  PRICE_UPDATE
+}
+
+type GlobalStats @entity {
+  id: ID!
+  totalNFTs: BigInt!
+  totalUsers: BigInt!
+  totalTransactions: BigInt!
+  totalVolume: BigInt!
+  lastUpdated: BigInt!
+}
