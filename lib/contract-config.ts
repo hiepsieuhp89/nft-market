@@ -1,7 +1,7 @@
 // Contract configuration
 export const CONTRACT_CONFIG = {
-  // Deployed contract address (replace with your actual deployed address)
-  address: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b7", // Example address
+  // Deployed contract address from environment variables
+  address: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b7",
 
   // Contract ABI
   abi: [
@@ -604,12 +604,12 @@ export const CONTRACT_CONFIG = {
     },
   ],
 
-  // Network configuration - Polygon Amoy Testnet
+  // Network configuration - from environment variables
   network: {
-    chainId: 80002, // Polygon Amoy Testnet
-    name: "Polygon Amoy",
-    rpcUrl: "https://rpc-amoy.polygon.technology/",
-    blockExplorer: "https://amoy.polygonscan.com/",
+    chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID) || 80002, // Polygon Amoy Testnet
+    name: process.env.NEXT_PUBLIC_NETWORK_NAME || "Polygon Amoy",
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology/",
+    blockExplorer: process.env.NEXT_PUBLIC_BLOCK_EXPLORER || "https://amoy.polygonscan.com/",
     nativeCurrency: {
       name: "MATIC",
       symbol: "MATIC",
@@ -631,10 +631,11 @@ export const CONTRACT_CONFIG = {
   },
 }
 
-// IPFS configuration for metadata storage
+// IPFS configuration for metadata storage - from environment variables
 export const IPFS_CONFIG = {
-  gateway: "https://gateway.pinata.cloud/ipfs/",
+  gateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://gateway.pinata.cloud/ipfs/",
   apiUrl: "https://api.pinata.cloud/pinning/pinJSONToIPFS",
-  apiKey: "your_pinata_api_key", // Replace with your Pinata API key
-  secretKey: "your_pinata_secret_key", // Replace with your Pinata secret key
+  apiKey: process.env.NEXT_PUBLIC_PINATA_API_KEY || "",
+  secretKey: process.env.NEXT_PUBLIC_PINATA_SECRET_KEY || "",
+  jwt: process.env.NEXT_PUBLIC_PINATA_JWT || "",
 }

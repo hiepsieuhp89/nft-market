@@ -29,20 +29,42 @@ npm install
 \`\`\`
 
 ### 2. Cấu hình Environment Variables
-Copy file `.env.example` thành `.env.local` và cập nhật các giá trị Firebase:
+
+**Cách 1: Sử dụng setup script (Khuyến nghị)**
 \`\`\`bash
-cp .env.example .env.local
+npm run setup
+\`\`\`
+Script sẽ hướng dẫn bạn cấu hình tất cả environment variables cần thiết.
+
+**Cách 2: Cấu hình thủ công**
+Copy file `.env.example` thành `.env` và cập nhật các giá trị:
+\`\`\`bash
+cp .env.example .env
 \`\`\`
 
-Cập nhật các giá trị trong `.env.local`:
+Cập nhật các giá trị trong `.env`:
 \`\`\`env
+# Blockchain Configuration
+NEXT_PUBLIC_CONTRACT_ADDRESS=your_contract_address
+NEXT_PUBLIC_CHAIN_ID=80002
+NEXT_PUBLIC_RPC_URL=https://rpc-amoy.polygon.technology/
+
+# IPFS Configuration (Pinata)
+NEXT_PUBLIC_PINATA_API_KEY=your_pinata_api_key
+NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt
+
+# Firebase Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
+\`\`\`
+
+**Kiểm tra cấu hình:**
+\`\`\`bash
+npm run validate
 \`\`\`
 
 ### 3. Cấu hình Smart Contract
@@ -77,7 +99,27 @@ export const IPFS_CONFIG = {
 
 ### 5. Chạy ứng dụng
 \`\`\`bash
+# Chạy với validation
+npm run dev:validate
+
+# Hoặc chạy trực tiếp
 npm run dev
+\`\`\`
+
+## 🛠 Scripts có sẵn
+
+\`\`\`bash
+# Cấu hình environment variables
+npm run setup
+
+# Kiểm tra cấu hình
+npm run validate
+
+# Chạy development server với validation
+npm run dev:validate
+
+# Deploy smart contract
+npm run deploy
 \`\`\`
 
 ## 📋 Hướng dẫn sử dụng

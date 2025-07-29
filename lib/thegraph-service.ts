@@ -1,7 +1,7 @@
 import { request, gql } from "graphql-request"
 
-// The Graph endpoint (replace with your deployed subgraph URL)
-const SUBGRAPH_URL = "https://api.studio.thegraph.com/query/your-subgraph-id/nft-marketplace-polygon/version/latest"
+// The Graph endpoint from environment variables
+const SUBGRAPH_URL = process.env.NEXT_PUBLIC_GRAPH_API_URL || "https://api.studio.thegraph.com/query/your-subgraph-id/nft-marketplace-polygon/version/latest"
 
 // GraphQL queries
 const GET_NFTS_QUERY = gql`
@@ -160,13 +160,18 @@ const GET_GLOBAL_STATS_QUERY = gql`
 // Service functions
 export const fetchNFTs = async (first = 10, skip = 0, orderBy = "createdAt", orderDirection = "desc") => {
   try {
-    const data = await request(SUBGRAPH_URL, GET_NFTS_QUERY, {
-      first,
-      skip,
-      orderBy,
-      orderDirection,
-    })
-    return data.nfts
+    if (!SUBGRAPH_URL.includes("your-subgraph-id")) {
+      const data = await request(SUBGRAPH_URL, GET_NFTS_QUERY, {
+        first,
+        skip,
+        orderBy,
+        orderDirection,
+      })
+      return (data as any).nfts
+    } else {
+      console.warn("The Graph subgraph URL not configured, returning empty array")
+      return []
+    }
   } catch (error) {
     console.error("Error fetching NFTs from The Graph:", error)
     throw error
@@ -175,8 +180,13 @@ export const fetchNFTs = async (first = 10, skip = 0, orderBy = "createdAt", ord
 
 export const fetchUserNFTs = async (userId: string) => {
   try {
-    const data = await request(SUBGRAPH_URL, GET_USER_NFTS_QUERY, { userId })
-    return data.user
+    if (!SUBGRAPH_URL.includes("your-subgraph-id")) {
+      const data = await request(SUBGRAPH_URL, GET_USER_NFTS_QUERY, { userId })
+      return (data as any).user
+    } else {
+      console.warn("The Graph subgraph URL not configured, returning null")
+      return null
+    }
   } catch (error) {
     console.error("Error fetching user NFTs from The Graph:", error)
     throw error
@@ -185,12 +195,17 @@ export const fetchUserNFTs = async (userId: string) => {
 
 export const fetchTransactions = async (first = 10, skip = 0, userId?: string) => {
   try {
-    const data = await request(SUBGRAPH_URL, GET_TRANSACTIONS_QUERY, {
-      first,
-      skip,
-      userId,
-    })
-    return data.transactions
+    if (!SUBGRAPH_URL.includes("your-subgraph-id")) {
+      const data = await request(SUBGRAPH_URL, GET_TRANSACTIONS_QUERY, {
+        first,
+        skip,
+        userId,
+      })
+      return (data as any).transactions
+    } else {
+      console.warn("The Graph subgraph URL not configured, returning empty array")
+      return []
+    }
   } catch (error) {
     console.error("Error fetching transactions from The Graph:", error)
     throw error
@@ -199,12 +214,17 @@ export const fetchTransactions = async (first = 10, skip = 0, userId?: string) =
 
 export const fetchTransfers = async (first = 10, skip = 0, nftId?: string) => {
   try {
-    const data = await request(SUBGRAPH_URL, GET_TRANSFERS_QUERY, {
-      first,
-      skip,
-      nftId,
-    })
-    return data.transfers
+    if (!SUBGRAPH_URL.includes("your-subgraph-id")) {
+      const data = await request(SUBGRAPH_URL, GET_TRANSFERS_QUERY, {
+        first,
+        skip,
+        nftId,
+      })
+      return (data as any).transfers
+    } else {
+      console.warn("The Graph subgraph URL not configured, returning empty array")
+      return []
+    }
   } catch (error) {
     console.error("Error fetching transfers from The Graph:", error)
     throw error
@@ -213,8 +233,13 @@ export const fetchTransfers = async (first = 10, skip = 0, nftId?: string) => {
 
 export const fetchGlobalStats = async () => {
   try {
-    const data = await request(SUBGRAPH_URL, GET_GLOBAL_STATS_QUERY)
-    return data.globalStats
+    if (!SUBGRAPH_URL.includes("your-subgraph-id")) {
+      const data = await request(SUBGRAPH_URL, GET_GLOBAL_STATS_QUERY)
+      return (data as any).globalStats
+    } else {
+      console.warn("The Graph subgraph URL not configured, returning null")
+      return null
+    }
   } catch (error) {
     console.error("Error fetching global stats from The Graph:", error)
     throw error

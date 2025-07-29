@@ -1,14 +1,19 @@
 import Moralis from "moralis"
 
-// Moralis configuration
+// Moralis configuration from environment variables
 const MORALIS_CONFIG = {
-  apiKey: "your_moralis_api_key", // Replace with your Moralis API key
-  serverUrl: "your_moralis_server_url", // Replace with your Moralis server URL
+  apiKey: process.env.NEXT_PUBLIC_MORALIS_API_KEY || "",
+  serverUrl: process.env.NEXT_PUBLIC_MORALIS_SERVER_URL || "",
+  chainId: process.env.NEXT_PUBLIC_CHAIN_ID || "80002", // Polygon Amoy
 }
 
 // Initialize Moralis
 export const initializeMoralis = async () => {
   try {
+    if (!MORALIS_CONFIG.apiKey) {
+      throw new Error("Moralis API key not configured")
+    }
+
     if (!Moralis.Core.isStarted) {
       await Moralis.start({
         apiKey: MORALIS_CONFIG.apiKey,
@@ -25,13 +30,14 @@ export const getNFTMetadata = async (address: string, tokenId: string) => {
   try {
     await initializeMoralis()
 
+    const chainHex = `0x${Number(MORALIS_CONFIG.chainId).toString(16)}`
     const response = await Moralis.EvmApi.nft.getNFTMetadata({
       address,
       tokenId,
-      chain: "0x13882", // Polygon Amoy
+      chain: chainHex,
     })
 
-    return response.toJSON()
+    return response?.toJSON() || null
   } catch (error) {
     console.error("Error fetching NFT metadata:", error)
     throw error
@@ -43,13 +49,14 @@ export const getNFTsByWallet = async (walletAddress: string) => {
   try {
     await initializeMoralis()
 
+    const chainHex = `0x${Number(MORALIS_CONFIG.chainId).toString(16)}`
     const response = await Moralis.EvmApi.nft.getWalletNFTs({
       address: walletAddress,
-      chain: "0x13882", // Polygon Amoy
+      chain: chainHex,
       limit: 100,
     })
 
-    return response.toJSON()
+    return response?.toJSON() || []
   } catch (error) {
     console.error("Error fetching wallet NFTs:", error)
     throw error
@@ -61,9 +68,10 @@ export const getNFTTransfers = async (address: string, tokenId?: string) => {
   try {
     await initializeMoralis()
 
+    const chainHex = `0x${Number(MORALIS_CONFIG.chainId).toString(16)}`
     const params: any = {
       address,
-      chain: "0x13882", // Polygon Amoy
+      chain: chainHex,
       limit: 100,
     }
 
@@ -73,7 +81,7 @@ export const getNFTTransfers = async (address: string, tokenId?: string) => {
 
     const response = await Moralis.EvmApi.nft.getNFTTransfers(params)
 
-    return response.toJSON()
+    return response?.toJSON() || []
   } catch (error) {
     console.error("Error fetching NFT transfers:", error)
     throw error
@@ -85,14 +93,42 @@ export const getContractEvents = async (address: string, topic: string) => {
   try {
     await initializeMoralis()
 
+    const chainHex = `0x${Number(MORALIS_CONFIG.chainId).toString(16)}`
+
+    // Basic ABI for common events
+    const basicAbi = [
+      {
+        anonymous: false,
+        inputs: [
+          { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
+          { indexed: true, internalType: "address", name: "creator", type: "address" },
+          { indexed: false, internalType: "string", name: "tokenURI", type: "string" },
+          { indexed: false, internalType: "uint256", name: "price", type: "uint256" }
+        ],
+        name: "NFTMinted",
+        type: "event"
+      },
+      {
+        anonymous: false,
+        inputs: [
+          { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
+          { indexed: true, internalType: "address", name: "from", type: "address" },
+          { indexed: true, internalType: "address", name: "to", type: "address" }
+        ],
+        name: "NFTTransferred",
+        type: "event"
+      }
+    ]
+
     const response = await Moralis.EvmApi.events.getContractEvents({
       address,
-      chain: "0x13882", // Polygon Amoy
+      chain: chainHex,
       topic,
+      abi: basicAbi as any, // Type assertion for Moralis ABI compatibility
       limit: 100,
     })
 
-    return response.toJSON()
+    return response?.toJSON() || []
   } catch (error) {
     console.error("Error fetching contract events:", error)
     throw error
@@ -104,11 +140,14 @@ export const createEventStream = async (contractAddress: string) => {
   try {
     await initializeMoralis()
 
+    const chainHex = `0x${Number(MORALIS_CONFIG.chainId).toString(16)}`
+    const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_URL || `${process.env.NEXT_PUBLIC_APP_URL}/api/webhook`
+
     const stream = {
-      chains: ["0x13882"], // Polygon Amoy
+      chains: [chainHex],
       description: "NFT Marketplace Events",
       tag: "nft-marketplace",
-      webhookUrl: "https://your-webhook-url.com/webhook", // Replace with your webhook URL
+      webhookUrl,
       includeContractLogs: true,
       includeNativeTxs: true,
       abi: [

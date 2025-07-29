@@ -1,6 +1,13 @@
 import { ethers } from "ethers"
 import { CONTRACT_CONFIG, IPFS_CONFIG } from "./contract-config"
 
+// Extend Window interface for ethereum
+declare global {
+  interface Window {
+    ethereum?: any
+  }
+}
+
 // Get Web3 provider
 export const getProvider = () => {
   if (typeof window !== "undefined" && window.ethereum) {
@@ -19,20 +26,42 @@ export const getContract = async () => {
 // Upload metadata to IPFS
 export const uploadToIPFS = async (metadata: any) => {
   try {
+    // Check if IPFS configuration is available
+    if (!IPFS_CONFIG.apiKey && !IPFS_CONFIG.jwt) {
+      console.warn("IPFS configuration not found, using fallback data URL")
+      return `data:application/json;base64,${btoa(JSON.stringify(metadata))}`
+    }
+
+    // Prepare headers - prefer JWT over API key/secret
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    }
+
+    if (IPFS_CONFIG.jwt) {
+      headers["Authorization"] = `Bearer ${IPFS_CONFIG.jwt}`
+    } else if (IPFS_CONFIG.apiKey && IPFS_CONFIG.secretKey) {
+      headers["pinata_api_key"] = IPFS_CONFIG.apiKey
+      headers["pinata_secret_api_key"] = IPFS_CONFIG.secretKey
+    }
+
     const response = await fetch(IPFS_CONFIG.apiUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        pinata_api_key: IPFS_CONFIG.apiKey,
-        pinata_secret_api_key: IPFS_CONFIG.secretKey,
-      },
+      headers,
       body: JSON.stringify({
         pinataContent: metadata,
         pinataMetadata: {
           name: `NFT-${metadata.name}`,
+          keyvalues: {
+            creator: metadata.attributes?.find((attr: any) => attr.trait_type === "Creator")?.value || "unknown",
+            created_at: new Date().toISOString(),
+          },
         },
       }),
     })
+
+    if (!response.ok) {
+      throw new Error(`IPFS upload failed: ${response.statusText}`)
+    }
 
     const result = await response.json()
     return `${IPFS_CONFIG.gateway}${result.IpfsHash}`

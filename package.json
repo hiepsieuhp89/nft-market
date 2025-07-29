@@ -6,7 +6,11 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "setup": "node scripts/setup-env.js",
+    "validate": "node scripts/validate-env.js",
+    "deploy": "npx hardhat run scripts/deploy-contract.js --network polygon-amoy",
+    "dev:validate": "npm run validate && npm run dev"
   },
   "dependencies": {
     "@graphprotocol/graph-ts": "latest",
