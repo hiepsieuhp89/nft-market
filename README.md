@@ -115,6 +115,9 @@ npm run setup
 # Kiểm tra cấu hình
 npm run validate
 
+# Test Moralis connection
+npm run test:moralis
+
 # Chạy development server với validation
 npm run dev:validate
 

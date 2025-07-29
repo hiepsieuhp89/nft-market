@@ -55,9 +55,9 @@
 
 **Backend Services:**
 - `lib/nft-service.ts::getNFTsByUser()` - Lấy NFT của user
-- `lib/blockchain-service.ts::getNFTsByOwner()` - Lấy NFT từ blockchain
-- `lib/thegraph-service.ts::fetchNFTs()` - Lấy NFT từ The Graph
-- `lib/moralis-service.ts::getNFTsByWallet()` - Lấy NFT từ Moralis
+- `lib/blockchain-service.ts::getNFTsByOwner()` - Lấy NFT từ blockchain (fallback)
+- `lib/moralis-service.ts::getNFTsByWallet()` - Lấy NFT từ Moralis (primary)
+- `lib/analytics-service.ts::getGlobalAnalytics()` - Thống kê và analytics
 
 **Luồng xử lý:**
 1. Lấy danh sách NFT từ Firestore
@@ -94,15 +94,16 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id_here
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id_here
 ```
 
-### Moralis Configuration
+### Moralis v2 Configuration
 ```env
 NEXT_PUBLIC_MORALIS_API_KEY=your_moralis_api_key_here
-NEXT_PUBLIC_MORALIS_SERVER_URL=your_moralis_server_url_here
+# Note: Moralis v2 only requires API key, no server URL needed
 ```
 
-### The Graph Configuration
+### Analytics Configuration
 ```env
-NEXT_PUBLIC_GRAPH_API_URL=https://api.thegraph.com/subgraphs/name/your_subgraph_name
+# The Graph is disabled - using Moralis for analytics
+# NEXT_PUBLIC_GRAPH_API_URL=https://api.thegraph.com/subgraphs/name/your_subgraph_name
 ```
 
 ## Hướng dẫn setup từng service
@@ -120,16 +121,18 @@ NEXT_PUBLIC_GRAPH_API_URL=https://api.thegraph.com/subgraphs/name/your_subgraph_
 4. Lấy config từ Project Settings
 5. Cập nhật vào file .env
 
-### 3. Setup Moralis
+### 3. Setup Moralis v2
 1. Đăng ký tại https://moralis.io/
-2. Tạo server mới
-3. Lấy API Key và Server URL
-4. Cập nhật vào file .env
+2. Tạo project mới trong dashboard
+3. Lấy API Key từ project settings
+4. Cập nhật vào file .env (chỉ cần API key)
+5. Test connection: `npm run test:moralis`
 
-### 4. Setup The Graph
-1. Deploy subgraph lên The Graph Studio
-2. Lấy query URL
-3. Cập nhật vào file .env
+### 4. Analytics và Real-time Data
+**The Graph đã được thay thế bằng Moralis**
+- Moralis cung cấp đầy đủ tính năng analytics
+- Real-time events thông qua polling
+- Không cần deploy subgraph riêng
 
 ## Lưu ý quan trọng
 

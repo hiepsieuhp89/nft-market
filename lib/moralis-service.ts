@@ -1,13 +1,12 @@
 import Moralis from "moralis"
 
-// Moralis configuration from environment variables
+// Moralis v2 configuration from environment variables
 const MORALIS_CONFIG = {
   apiKey: process.env.NEXT_PUBLIC_MORALIS_API_KEY || "",
-  serverUrl: process.env.NEXT_PUBLIC_MORALIS_SERVER_URL || "",
   chainId: process.env.NEXT_PUBLIC_CHAIN_ID || "80002", // Polygon Amoy
 }
 
-// Initialize Moralis
+// Initialize Moralis v2
 export const initializeMoralis = async () => {
   try {
     if (!MORALIS_CONFIG.apiKey) {
@@ -25,7 +24,7 @@ export const initializeMoralis = async () => {
   }
 }
 
-// Get NFT metadata from Moralis
+// Get NFT metadata from Moralis v2
 export const getNFTMetadata = async (address: string, tokenId: string) => {
   try {
     await initializeMoralis()

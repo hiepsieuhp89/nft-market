@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { subscribeToNFTEvents, fetchGlobalStats } from "@/lib/thegraph-service"
+import { subscribeToAnalytics, getGlobalAnalytics } from "@/lib/analytics-service"
 import { Loader2, Activity, TrendingUp, Users, Coins } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale"
@@ -25,17 +25,25 @@ export default function RealTimeEvents({ walletAddress }: RealTimeEventsProps) {
     const initializeRealTime = async () => {
       try {
         // Fetch initial global stats
-        const stats = await fetchGlobalStats()
+        const stats = await getGlobalAnalytics()
         setGlobalStats(stats)
 
-        // Subscribe to real-time events
-        cleanup = subscribeToNFTEvents((newEvents) => {
-          setEvents((prevEvents) => {
-            // Merge new events with existing ones, avoiding duplicates
-            const eventIds = new Set(prevEvents.map((e) => e.id))
-            const uniqueNewEvents = newEvents.filter((e: any) => !eventIds.has(e.id))
-            return [...uniqueNewEvents, ...prevEvents].slice(0, 50) // Keep only latest 50 events
-          })
+        // Set recent NFTs as events
+        if (stats.recentNFTs) {
+          setEvents(stats.recentNFTs.slice(0, 20))
+        }
+
+        // Subscribe to real-time analytics updates
+        cleanup = subscribeToAnalytics((newStats) => {
+          setGlobalStats(newStats)
+          if (newStats.recentNFTs) {
+            setEvents((prevEvents) => {
+              // Merge new NFTs with existing ones, avoiding duplicates
+              const eventIds = new Set(prevEvents.map((e) => e.id))
+              const uniqueNewEvents = newStats.recentNFTs.filter((e: any) => !eventIds.has(e.id))
+              return [...uniqueNewEvents, ...prevEvents].slice(0, 50) // Keep only latest 50 events
+            })
+          }
           setIsLive(true)
         })
 
@@ -56,33 +64,17 @@ export default function RealTimeEvents({ walletAddress }: RealTimeEventsProps) {
   }, [])
 
   const getEventIcon = (event: any) => {
-    if (event.transactions && event.transactions.length > 0) {
-      const latestTx = event.transactions[0]
-      switch (latestTx.type) {
-        case "MINT":
-          return <Coins className="h-4 w-4 text-green-600" />
-        case "TRANSFER":
-          return <Activity className="h-4 w-4 text-blue-600" />
-        default:
-          return <Activity className="h-4 w-4 text-gray-600" />
-      }
+    if (event.isTransferred) {
+      return <Activity className="h-4 w-4 text-blue-600" />
     }
-    return <Activity className="h-4 w-4 text-gray-600" />
+    return <Coins className="h-4 w-4 text-green-600" />
   }
 
   const getEventDescription = (event: any) => {
-    if (event.transactions && event.transactions.length > 0) {
-      const latestTx = event.transactions[0]
-      switch (latestTx.type) {
-        case "MINT":
-          return `NFT #${event.tokenId} được mint bởi ${event.creator.address.slice(0, 6)}...${event.creator.address.slice(-4)}`
-        case "TRANSFER":
-          return `NFT #${event.tokenId} được chuyển đến ${event.owner.address.slice(0, 6)}...${event.owner.address.slice(-4)}`
-        default:
-          return `NFT #${event.tokenId} có hoạt động mới`
-      }
+    if (event.isTransferred) {
+      return `NFT "${event.name}" được chuyển đến ${event.transferredTo?.slice(0, 6)}...${event.transferredTo?.slice(-4)}`
     }
-    return `NFT #${event.tokenId} có hoạt động mới`
+    return `NFT "${event.name}" được mint bởi ${event.walletAddress?.slice(0, 6)}...${event.walletAddress?.slice(-4)}`
   }
 
   if (loading) {
@@ -187,18 +179,19 @@ export default function RealTimeEvents({ walletAddress }: RealTimeEventsProps) {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{getEventDescription(event)}</p>
                     <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                      <span>Giá: {(Number(event.price) / 1e18).toFixed(3)} MATIC</span>
+                      <span>Giá: {event.price} MATIC</span>
+                      <span>Token ID: #{event.tokenId}</span>
                       <span>
-                        {formatDistanceToNow(new Date(Number(event.createdAt) * 1000), {
+                        {event.createdAt && formatDistanceToNow(event.createdAt.toDate(), {
                           addSuffix: true,
                           locale: vi,
                         })}
                       </span>
                     </div>
                   </div>
-                  {event.image && (
+                  {event.imageUrl && (
                     <img
-                      src={event.image || "/placeholder.svg"}
+                      src={event.imageUrl || "/placeholder.svg"}
                       alt={event.name}
                       className="w-12 h-12 object-cover rounded"
                     />

@@ -3,7 +3,7 @@ require("dotenv").config()
 
 module.exports = {
   solidity: {
-    version: "0.8.19",
+    version: "0.8.20",
     settings: {
       optimizer: {
         enabled: true,
@@ -15,24 +15,21 @@ module.exports = {
     polygon: {
       url: "https://polygon-rpc.com/",
       accounts: [
-        // Add your private key here (use environment variables in production)
-        "0x" + "your_private_key_here",
+        process.env.PRIVATE_KEY ? `0x${process.env.PRIVATE_KEY}` : "0x" + "your_private_key_here",
       ],
       gasPrice: 35000000000, // 35 gwei
     },
     mumbai: {
       url: "https://rpc-mumbai.maticvigil.com/",
       accounts: [
-        // Add your private key here (use environment variables in production)
-        "0x" + "your_private_key_here",
+        process.env.PRIVATE_KEY ? `0x${process.env.PRIVATE_KEY}` : "0x" + "your_private_key_here",
       ],
       gasPrice: 35000000000, // 35 gwei
     },
     amoy: {
-      url: "https://rpc-amoy.polygon.technology/",
+      url: process.env.POLYGON_RPC_URL || "https://rpc-amoy.polygon.technology/",
       accounts: [
-        // Add your private key here (use environment variables in production)
-        "0x" + "your_private_key_here",
+        process.env.PRIVATE_KEY ? `0x${process.env.PRIVATE_KEY}` : "0x" + "your_private_key_here",
       ],
       gasPrice: 35000000000, // 35 gwei
     },

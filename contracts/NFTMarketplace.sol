@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
-    using Counters for Counters.Counter;
-    
-    Counters.Counter private _tokenIdCounter;
+    uint256 private _tokenIdCounter;
     
     // Mapping from token ID to price in wei
     mapping(uint256 => uint256) public tokenPrices;
@@ -22,23 +19,23 @@ contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
     event NFTTransferred(uint256 indexed tokenId, address indexed from, address indexed to);
     event PriceUpdated(uint256 indexed tokenId, uint256 newPrice);
     
-    constructor() ERC721("NFT Marketplace", "NFTM") {}
+    constructor() ERC721("NFT Marketplace", "NFTM") Ownable(msg.sender) {}
     
     function mintNFT(
         address to,
-        string memory tokenURI,
+        string memory uri,
         uint256 price
     ) public returns (uint256) {
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter;
+        _tokenIdCounter++;
         
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, tokenURI);
+        _setTokenURI(tokenId, uri);
         
         tokenPrices[tokenId] = price;
         tokenCreators[tokenId] = to;
         
-        emit NFTMinted(tokenId, to, tokenURI, price);
+        emit NFTMinted(tokenId, to, uri, price);
         
         return tokenId;
     }
@@ -60,13 +57,17 @@ contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
     }
     
     function getTokensByOwner(address owner) public view returns (uint256[] memory) {
-        uint256 totalTokens = _tokenIdCounter.current();
+        uint256 totalTokens = _tokenIdCounter;
         uint256 tokenCount = 0;
         
         // Count tokens owned by the address
         for (uint256 i = 0; i < totalTokens; i++) {
-            if (_exists(i) && ownerOf(i) == owner) {
-                tokenCount++;
+            try this.ownerOf(i) returns (address tokenOwner) {
+                if (tokenOwner == owner) {
+                    tokenCount++;
+                }
+            } catch {
+                // Token doesn't exist, skip
             }
         }
         
@@ -75,9 +76,13 @@ contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
         uint256 index = 0;
         
         for (uint256 i = 0; i < totalTokens; i++) {
-            if (_exists(i) && ownerOf(i) == owner) {
-                tokens[index] = i;
-                index++;
+            try this.ownerOf(i) returns (address tokenOwner) {
+                if (tokenOwner == owner) {
+                    tokens[index] = i;
+                    index++;
+                }
+            } catch {
+                // Token doesn't exist, skip
             }
         }
         
@@ -85,14 +90,10 @@ contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
     }
     
     function getTotalSupply() public view returns (uint256) {
-        return _tokenIdCounter.current();
+        return _tokenIdCounter;
     }
     
     // Override required functions
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-        super._burn(tokenId);
-    }
-    
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }

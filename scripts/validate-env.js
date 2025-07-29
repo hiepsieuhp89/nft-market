@@ -134,12 +134,8 @@ function validateEnvironment() {
     console.log('⚠️  Moralis: Not configured (optional)');
   }
 
-  if (process.env.NEXT_PUBLIC_GRAPH_API_URL && 
-      !process.env.NEXT_PUBLIC_GRAPH_API_URL.includes('your-subgraph-id')) {
-    console.log('✅ The Graph: Subgraph URL configured');
-  } else {
-    console.log('⚠️  The Graph: Not configured (optional)');
-  }
+  // The Graph removed - using Moralis instead
+  console.log('ℹ️  The Graph: Disabled (using Moralis for analytics)');
 
   // Summary
   console.log('\n📊 Validation Summary:');

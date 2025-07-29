@@ -105,16 +105,12 @@ const envTemplate = {
 
   // Optional Services
   'NEXT_PUBLIC_MORALIS_API_KEY': {
-    description: 'Moralis API Key (optional)',
+    description: 'Moralis v2 API Key (optional)',
     default: '',
     required: false,
     sensitive: true
   },
-  'NEXT_PUBLIC_GRAPH_API_URL': {
-    description: 'The Graph API URL (optional)',
-    default: '',
-    required: false
-  },
+  // The Graph removed - using Moralis instead
   'NEXT_PUBLIC_APP_URL': {
     description: 'Application URL',
     default: 'http://localhost:3000',

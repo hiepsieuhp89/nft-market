@@ -5,6 +5,7 @@ import {
   getNFTsByOwner,
   getTransactionDetails,
 } from "./blockchain-service"
+import { getNFTsByWallet, getNFTMetadata } from "./moralis-service"
 import { saveTransaction } from "./transaction-service"
 import { db } from "@/lib/firebase"
 
@@ -108,21 +109,34 @@ export const getNFTsByUser = async (userId: string, walletAddress?: string) => {
       ...doc.data(),
     }))
 
-    // If wallet is connected, also get NFTs from blockchain
+    // If wallet is connected, also get NFTs from Moralis
     if (walletAddress) {
       try {
-        const blockchainNFTs = await getNFTsByOwner(walletAddress)
+        // Try Moralis first, fallback to direct blockchain
+        let blockchainNFTs: any[] = []
+
+        try {
+          const moralisNFTs = await getNFTsByWallet(walletAddress)
+          blockchainNFTs = moralisNFTs.result || []
+        } catch (moralisError) {
+          console.warn("Moralis unavailable, using direct blockchain:", moralisError)
+          blockchainNFTs = await getNFTsByOwner(walletAddress)
+        }
 
         // Merge blockchain data with Firestore data
-        const mergedNFTs = firestoreNFTs.map((nft) => {
-          const blockchainNFT = blockchainNFTs.find((bNft) => bNft.tokenId === nft.tokenId?.toString())
+        const mergedNFTs = firestoreNFTs.map((nft: any) => {
+          const blockchainNFT = blockchainNFTs.find((bNft: any) => {
+            const tokenId = bNft.token_id || bNft.tokenId
+            return tokenId === nft.tokenId?.toString()
+          })
 
           if (blockchainNFT) {
             return {
               ...nft,
-              onChainPrice: blockchainNFT.price,
+              onChainPrice: blockchainNFT.price || blockchainNFT.amount,
               metadata: blockchainNFT.metadata,
-              tokenURI: blockchainNFT.tokenURI,
+              tokenURI: blockchainNFT.token_uri || blockchainNFT.tokenURI,
+              moralisData: blockchainNFT,
             }
           }
 
@@ -131,7 +145,7 @@ export const getNFTsByUser = async (userId: string, walletAddress?: string) => {
 
         return mergedNFTs
       } catch (blockchainError) {
-        console.error("Error fetching from blockchain:", blockchainError)
+        console.error("Error fetching from blockchain services:", blockchainError)
         return firestoreNFTs
       }
     }
