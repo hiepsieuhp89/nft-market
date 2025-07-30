@@ -117,38 +117,56 @@ export default function TransferNFT({ userId, walletAddress }: TransferNFTProps)
 
   if (fetchingNFTs) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center py-16">
+        <div className="relative">
+          <Loader2 className="h-12 w-12 animate-spin text-pink-400 cyber-glow" />
+          <div className="absolute inset-0 h-12 w-12 border-2 border-pink-400/30 rounded-full animate-pulse"></div>
+        </div>
+        <span className="ml-4 text-pink-400 font-bold font-mono">LOADING ASSETS...</span>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5" />
-            Chuyển NFT
+    <div className="max-w-3xl mx-auto">
+      <Card className="cyber-card border-pink-400/30 cyber-glow">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-3 text-2xl font-bold text-pink-400 neon-text">
+            <Send className="h-6 w-6" />
+            ASSET TRANSFER PROTOCOL
           </CardTitle>
-          <CardDescription>Chuyển NFT của bạn đến địa chỉ ví khác</CardDescription>
+          <CardDescription className="text-pink-300/80 font-medium text-lg">
+            Transfer your digital assets to another wallet address
+          </CardDescription>
+          <div className="w-48 h-0.5 bg-gradient-to-r from-transparent via-pink-400 to-transparent mx-auto mt-4"></div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-8">
           {nfts.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-600">Bạn chưa có NFT nào để chuyển. Hãy tạo NFT trước!</p>
+            <div className="text-center py-12">
+              <div className="relative mb-6">
+                <Send className="h-16 w-16 mx-auto text-pink-400/50 cyber-glow" />
+                <div className="absolute inset-0 h-16 w-16 mx-auto border-2 border-pink-400/20 rounded-full animate-pulse"></div>
+              </div>
+              <h3 className="text-xl font-bold text-pink-400 neon-text mb-3">NO TRANSFERABLE ASSETS</h3>
+              <p className="text-pink-300/70 font-medium">Create NFTs first to enable transfer functionality</p>
             </div>
           ) : (
-            <form onSubmit={handleTransfer} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="nft-select">Chọn NFT</Label>
+            <form onSubmit={handleTransfer} className="space-y-8">
+              <div className="space-y-4">
+                <Label htmlFor="nft-select" className="text-pink-300 font-bold text-sm uppercase tracking-wider">
+                  🎯 Select Asset
+                </Label>
                 <Select value={selectedNFT} onValueChange={setSelectedNFT}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn NFT để chuyển" />
+                  <SelectTrigger className="bg-black/30 border-pink-400/30 text-pink-100 focus:border-pink-400 focus:ring-pink-400/20 cyber-scan py-3">
+                    <SelectValue placeholder="Choose NFT to transfer..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-black/90 border-pink-400/30">
                     {nfts.map((nft) => (
-                      <SelectItem key={nft.id} value={nft.id}>
+                      <SelectItem
+                        key={nft.id}
+                        value={nft.id}
+                        className="text-pink-100 focus:bg-pink-400/20 focus:text-pink-400"
+                      >
                         {nft.name} - {nft.price} MATIC
                       </SelectItem>
                     ))}
@@ -157,46 +175,54 @@ export default function TransferNFT({ userId, walletAddress }: TransferNFTProps)
               </div>
 
               {selectedNFTData && (
-                <Card className="bg-gray-50">
-                  <CardContent className="pt-4">
-                    <div className="flex gap-4">
+                <Card className="cyber-card border-pink-400/20 bg-black/20">
+                  <CardContent className="pt-6">
+                    <div className="flex gap-6">
                       <img
                         src={selectedNFTData.imageUrl || "/placeholder.svg"}
                         alt={selectedNFTData.name}
-                        className="w-20 h-20 object-cover rounded-lg"
+                        className="w-24 h-24 object-cover rounded-lg cyber-glow border border-pink-400/30"
                       />
                       <div className="flex-1">
-                        <h4 className="font-semibold">{selectedNFTData.name}</h4>
-                        <p className="text-sm text-gray-600 line-clamp-2">{selectedNFTData.description}</p>
-                        <p className="text-sm font-medium text-purple-600 mt-1">{selectedNFTData.price} MATIC</p>
+                        <h4 className="font-bold text-pink-400 text-lg neon-text">{selectedNFTData.name}</h4>
+                        <p className="text-sm text-pink-300/80 line-clamp-2 mt-2">{selectedNFTData.description}</p>
+                        <p className="text-sm font-bold text-purple-400 mt-3 bg-purple-400/10 px-3 py-1 rounded-full inline-block">
+                          {selectedNFTData.price} MATIC
+                        </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="recipient">Địa chỉ người nhận</Label>
+              <div className="space-y-4">
+                <Label htmlFor="recipient" className="text-pink-300 font-bold text-sm uppercase tracking-wider">
+                  🎯 Recipient Address
+                </Label>
                 <Input
                   id="recipient"
-                  placeholder="0x..."
+                  placeholder="0x1234567890abcdef..."
                   value={recipientAddress}
                   onChange={(e) => setRecipientAddress(e.target.value)}
-                  className="font-mono"
+                  className="bg-black/30 border-pink-400/30 text-pink-100 placeholder:text-pink-400/50 focus:border-pink-400 focus:ring-pink-400/20 cyber-scan font-mono text-sm py-3"
                 />
-                <p className="text-xs text-gray-500">Nhập địa chỉ ví Ethereum/Polygon của người nhận</p>
+                <p className="text-xs text-pink-400/70 font-mono">Enter the Ethereum/Polygon wallet address of the recipient</p>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold py-4 text-lg cyber-glow transition-all duration-300 transform hover:scale-105"
+                disabled={loading}
+              >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Đang chuyển...
+                    <Loader2 className="h-6 w-6 mr-3 animate-spin" />
+                    <span className="animate-pulse">TRANSFERRING ASSET...</span>
                   </>
                 ) : (
                   <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Chuyển NFT
+                    <Send className="h-5 w-5 mr-2" />
+                    EXECUTE TRANSFER
                   </>
                 )}
               </Button>
@@ -205,33 +231,37 @@ export default function TransferNFT({ userId, walletAddress }: TransferNFTProps)
         </CardContent>
       </Card>
       {transactionDetails && (
-        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <h3 className="font-semibold text-green-800 mb-2">✅ Chuyển NFT thành công!</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Transaction Hash:</span>
-              <a
-                href={`https://polygonscan.com/tx/${transactionDetails.transactionHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
-              >
-                <span className="font-mono text-xs">
-                  {transactionDetails.transactionHash.slice(0, 6)}...{transactionDetails.transactionHash.slice(-4)}
-                </span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
+        <Card className="mt-8 cyber-card border-green-400/30 cyber-glow">
+          <CardContent className="p-6">
+            <h3 className="font-bold text-green-400 neon-text mb-4 text-xl text-center">
+              ✅ TRANSFER COMPLETED SUCCESSFULLY!
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-black/30 rounded-lg border border-green-400/20">
+                <span className="text-green-300 font-bold text-sm uppercase tracking-wider">Transaction:</span>
+                <a
+                  href={`https://amoy.polygonscan.com/tx/${transactionDetails.transactionHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-green-400 hover:text-green-300 font-bold font-mono transition-colors cyber-glow"
+                >
+                  <span className="text-xs">
+                    {transactionDetails.transactionHash.slice(0, 8)}...{transactionDetails.transactionHash.slice(-6)}
+                  </span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-black/30 rounded-lg border border-green-400/20">
+                <span className="text-green-300 font-bold text-sm uppercase tracking-wider">Block:</span>
+                <span className="font-mono text-green-400 text-sm">{transactionDetails.blockNumber}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-black/30 rounded-lg border border-green-400/20">
+                <span className="text-green-300 font-bold text-sm uppercase tracking-wider">Gas Used:</span>
+                <span className="font-mono text-green-400 text-sm">{transactionDetails.gasUsed}</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Block Number:</span>
-              <span className="font-mono text-xs">{transactionDetails.blockNumber}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Gas Used:</span>
-              <span className="font-mono text-xs">{transactionDetails.gasUsed}</span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

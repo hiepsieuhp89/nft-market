@@ -52,10 +52,10 @@ export default function Home() {
 
   if (loading || !authInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center subtle-grid">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Đang khởi tạo ứng dụng...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-400 purple-glow-soft" />
+          <p className="text-purple-300">Đang khởi tạo ứng dụng...</p>
         </div>
       </div>
     )
@@ -63,14 +63,14 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center subtle-grid">
         <div className="text-center">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-            <h2 className="text-lg font-semibold text-red-800 mb-2">Lỗi khởi tạo</h2>
-            <p className="text-red-600 mb-4">{error}</p>
+          <div className="professional-card border-red-500/30 p-6 max-w-md">
+            <h2 className="text-lg font-semibold text-red-400 mb-2">Lỗi khởi tạo</h2>
+            <p className="text-red-300 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
             >
               Thử lại
             </button>
@@ -81,7 +81,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+    <main className="min-h-screen professional-bg">
       {user ? <Dashboard user={user} /> : <AuthForm />}
     </main>
   )

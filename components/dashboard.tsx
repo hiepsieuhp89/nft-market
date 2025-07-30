@@ -1,21 +1,22 @@
 "use client"
 
-import { useState } from "react"
-import type { User } from "firebase/auth"
+import CreateNFTForm from "@/components/create-nft-form"
+import CreateNFTModal from "@/components/create-nft-modal"
+import MaticBalance from "@/components/matic-balance"
+import NFTGallery from "@/components/nft-gallery"
+import NFTStats from "@/components/nft-stats"
+import TransactionHistory from "@/components/transaction-history"
+import TransferNFT from "@/components/transfer-nft"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import CreateNFTForm from "@/components/create-nft-form"
-import NFTGallery from "@/components/nft-gallery"
-import TransferNFT from "@/components/transfer-nft"
 import WalletConnect from "@/components/wallet-connect"
-import TransactionHistory from "@/components/transaction-history"
-import NFTStats from "@/components/nft-stats"
-import { LogOut, Wallet, Plus, GalleryThumbnailsIcon as Gallery, Send, Clock } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { auth } from "@/lib/firebase"
+import type { User } from "firebase/auth"
 import { signOut } from "firebase/auth"
+import { Clock, GalleryThumbnailsIcon as Gallery, LogOut, Palette, Plus, Send, Wallet } from "lucide-react"
+import { useState } from "react"
 
 interface DashboardProps {
   user: User
@@ -23,7 +24,7 @@ interface DashboardProps {
 
 export default function Dashboard({ user }: DashboardProps) {
   const [walletAddress, setWalletAddress] = useState<string>("")
-  const [activeTab, setActiveTab] = useState("gallery")
+  const [activeTab, setActiveTab] = useState("marketplace")
 
   const handleSignOut = async () => {
     try {
@@ -42,79 +43,162 @@ export default function Dashboard({ user }: DashboardProps) {
   }
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen subtle-grid">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Professional Header */}
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              NFT Marketplace
-            </h1>
-            <p className="text-gray-600 mt-1">Chào mừng, {user.email}</p>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg flex items-center justify-center purple-glow-soft">
+                <Palette className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
+                NFT Marketplace
+              </h1>
+              <p className="text-purple-300 mt-1">
+                Welcome back, <span className="text-purple-400 font-medium">{user.email}</span>
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-4">
+            {walletAddress && (
+              <CreateNFTModal userId={user.uid} walletAddress={walletAddress} />
+            )}
             <WalletConnect onWalletConnect={setWalletAddress} />
-            <Button variant="outline" onClick={handleSignOut}>
+            <Button
+              variant="outline"
+              onClick={handleSignOut}
+              className="border-red-400/50 text-red-400 hover:bg-red-400/10 hover:border-red-400 transition-all duration-200"
+            >
               <LogOut className="h-4 w-4 mr-2" />
-              Đăng xuất
+              Sign Out
             </Button>
           </div>
         </div>
 
-        {/* Wallet Status */}
+        {/* Wallet Connection Status */}
         {walletAddress && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-green-600" />
-                <span className="text-sm text-gray-600">Ví đã kết nối:</span>
-                <Badge variant="secondary" className="font-mono">
-                  {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                </Badge>
+          <Card className="mb-6 professional-card border-green-500/30 purple-glow-soft">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <Wallet className="h-4 w-4 text-green-400" />
+                <span className="text-green-400 font-medium">
+                  Wallet Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                </span>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Main Content */}
+        {/* MATIC Balance */}
+        {walletAddress && (
+          <div className="mb-6">
+            <MaticBalance walletAddress={walletAddress} />
+          </div>
+        )}
+
+        {/* Stats Overview */}
         {walletAddress && <NFTStats userId={user.uid} />}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 max-w-lg">
-            <TabsTrigger value="gallery" className="flex items-center gap-2">
-              <Gallery className="h-4 w-4" />
-              Bộ sưu tập
-            </TabsTrigger>
-            <TabsTrigger value="create" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Tạo NFT
-            </TabsTrigger>
-            <TabsTrigger value="transfer" className="flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              Chuyển NFT
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Lịch sử
-            </TabsTrigger>
-          </TabsList>
+        {/* Main Navigation */}
+        <div className="mb-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto bg-black/20 border border-purple-500/30 p-1">
+              <TabsTrigger
+                value="marketplace"
+                className="flex items-center gap-2 data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400 text-purple-300 font-medium"
+              >
+                <Gallery className="h-4 w-4" />
+                Marketplace
+              </TabsTrigger>
+              <TabsTrigger
+                value="create"
+                className="flex items-center gap-2 data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400 text-purple-300 font-medium"
+              >
+                <Plus className="h-4 w-4" />
+                Create NFT
+              </TabsTrigger>
+              <TabsTrigger
+                value="assets"
+                className="flex items-center gap-2 data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400 text-purple-300 font-medium"
+              >
+                <Send className="h-4 w-4" />
+                My Assets
+              </TabsTrigger>
+              <TabsTrigger
+                value="history"
+                className="flex items-center gap-2 data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400 text-purple-300 font-medium"
+              >
+                <Clock className="h-4 w-4" />
+                History
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="gallery" className="mt-6">
-            <NFTGallery userId={user.uid} walletAddress={walletAddress} />
-          </TabsContent>
+            {/* Marketplace Tab - Show all NFTs */}
+            <TabsContent value="marketplace" className="mt-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-purple-400 mb-3">
+                  Digital Marketplace
+                </h2>
+                <p className="text-purple-300/80 max-w-2xl mx-auto">
+                  Explore and discover unique digital assets from creators around the world
+                </p>
+              </div>
+              <NFTGallery userId={user.uid} walletAddress={walletAddress} />
+            </TabsContent>
 
-          <TabsContent value="create" className="mt-6">
-            <CreateNFTForm userId={user.uid} walletAddress={walletAddress} />
-          </TabsContent>
+            {/* Create NFT Tab */}
+            <TabsContent value="create" className="mt-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-purple-400 mb-3">
+                  Create Digital Asset
+                </h2>
+                <p className="text-purple-300/80 max-w-2xl mx-auto">
+                  Mint your unique digital creation on the blockchain
+                </p>
+              </div>
+              <CreateNFTForm userId={user.uid} walletAddress={walletAddress} />
+            </TabsContent>
 
-          <TabsContent value="transfer" className="mt-6">
-            <TransferNFT userId={user.uid} walletAddress={walletAddress} />
-          </TabsContent>
+            {/* My Assets Tab */}
+            <TabsContent value="assets" className="mt-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-purple-400 mb-3">
+                  My Digital Assets
+                </h2>
+                <p className="text-purple-300/80 max-w-2xl mx-auto">
+                  Manage and transfer your owned NFTs
+                </p>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-400 mb-4">Your Collection</h3>
+                  <NFTGallery userId={user.uid} walletAddress={walletAddress} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-400 mb-4">Transfer Assets</h3>
+                  <TransferNFT userId={user.uid} walletAddress={walletAddress} />
+                </div>
+              </div>
+            </TabsContent>
 
-          <TabsContent value="history" className="mt-6">
-            <TransactionHistory userId={user.uid} walletAddress={walletAddress} />
-          </TabsContent>
-        </Tabs>
+            {/* History Tab */}
+            <TabsContent value="history" className="mt-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-purple-400 mb-3">
+                  Transaction History
+                </h2>
+                <p className="text-purple-300/80 max-w-2xl mx-auto">
+                  Track all your blockchain transactions and activities
+                </p>
+              </div>
+              <TransactionHistory userId={user.uid} walletAddress={walletAddress} />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   )

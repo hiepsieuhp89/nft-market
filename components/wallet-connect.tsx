@@ -77,9 +77,25 @@ export default function WalletConnect({ onWalletConnect }: WalletConnectProps) {
   }
 
   return (
-    <Button onClick={connectWallet} disabled={connecting || connected} variant={connected ? "secondary" : "default"}>
+    <Button
+      onClick={connectWallet}
+      disabled={connecting || connected}
+      className={`${
+        connected
+          ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 purple-glow-soft text-white font-semibold"
+          : "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 purple-glow-soft text-white font-semibold"
+      } transition-all duration-200 hover-lift`}
+    >
       <Wallet className="h-4 w-4 mr-2" />
-      {connecting ? "Đang kết nối..." : connected ? "Đã kết nối" : "Kết nối ví"}
+      {connecting ? (
+        <>
+          <span className="animate-pulse">Connecting...</span>
+        </>
+      ) : connected ? (
+        "Connected"
+      ) : (
+        "Connect Wallet"
+      )}
     </Button>
   )
 }

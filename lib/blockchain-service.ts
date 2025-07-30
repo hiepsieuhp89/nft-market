@@ -122,7 +122,21 @@ export const mintNFT = async (
     }
   } catch (error: any) {
     console.error("Error minting NFT:", error)
-    throw new Error(`Minting failed: ${error.message}`)
+
+    // Check for specific error types
+    if (error.code === 'INSUFFICIENT_FUNDS' || error.message?.includes('insufficient funds')) {
+      throw new Error('Không đủ MATIC để thực hiện giao dịch. Vui lòng nạp thêm MATIC vào ví của bạn.')
+    }
+
+    if (error.code === 'ACTION_REJECTED' || error.message?.includes('user rejected')) {
+      throw new Error('Giao dịch đã bị từ chối bởi người dùng.')
+    }
+
+    if (error.message?.includes('gas')) {
+      throw new Error('Lỗi gas: Vui lòng thử lại với gas fee cao hơn hoặc kiểm tra số dư MATIC.')
+    }
+
+    throw new Error(`Lỗi mint NFT: ${error.message}`)
   }
 }
 
@@ -218,6 +232,23 @@ export const getTransactionDetails = async (txHash: string) => {
   } catch (error: any) {
     console.error("Error getting transaction details:", error)
     throw new Error(`Failed to fetch transaction: ${error.message}`)
+  }
+}
+
+// Check MATIC balance
+export const checkMaticBalance = async (walletAddress: string) => {
+  try {
+    const provider = getProvider()
+    const balance = await provider.getBalance(walletAddress)
+    const balanceInMatic = ethers.formatEther(balance)
+
+    return {
+      balance: balanceInMatic,
+      hasEnoughForGas: Number(balanceInMatic) > 0.01, // Minimum 0.01 MATIC for gas
+    }
+  } catch (error: any) {
+    console.error("Error checking MATIC balance:", error)
+    throw new Error(`Không thể kiểm tra số dư MATIC: ${error.message}`)
   }
 }
 
