@@ -4,9 +4,10 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Wallet, RefreshCw, ExternalLink } from "lucide-react"
+import { Wallet, RefreshCw } from "lucide-react"
 import { checkMaticBalance } from "@/lib/blockchain-service"
 import { toast } from "@/hooks/use-toast"
+import TestnetGuide from "@/components/testnet-guide"
 
 interface MaticBalanceProps {
   walletAddress: string
@@ -42,6 +43,14 @@ export default function MaticBalance({ walletAddress }: MaticBalanceProps) {
 
   const openFaucet = () => {
     window.open("https://faucet.polygon.technology/", "_blank")
+  }
+
+  const openAlchemyFaucet = () => {
+    window.open("https://www.alchemy.com/faucets/polygon-amoy", "_blank")
+  }
+
+  const openQuickNodeFaucet = () => {
+    window.open("https://faucet.quicknode.com/polygon/amoy", "_blank")
   }
 
   return (
@@ -81,28 +90,52 @@ export default function MaticBalance({ walletAddress }: MaticBalanceProps) {
               <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
             </Button>
             {!hasEnoughForGas && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={openFaucet}
-                className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
-              >
-                <ExternalLink className="h-3 w-3" />
-              </Button>
+              <div className="flex flex-col gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openFaucet}
+                  className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10 text-xs"
+                >
+                  Polygon
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openAlchemyFaucet}
+                  className="border-green-500/30 text-green-300 hover:bg-green-500/10 text-xs"
+                >
+                  Alchemy
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openQuickNodeFaucet}
+                  className="border-orange-500/30 text-orange-300 hover:bg-orange-500/10 text-xs"
+                >
+                  QuickNode
+                </Button>
+              </div>
             )}
           </div>
         </div>
         {!hasEnoughForGas && (
-          <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <p className="text-xs text-red-300">
-              Bạn cần ít nhất 0.01 MATIC để thực hiện giao dịch. 
-              <button 
-                onClick={openFaucet}
-                className="text-blue-400 hover:text-blue-300 underline ml-1"
-              >
-                Nhận MATIC miễn phí từ faucet
-              </button>
+          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-xs text-red-300 mb-2">
+              <strong>Cần MATIC testnet để thực hiện giao dịch!</strong>
             </p>
+            <p className="text-xs text-red-200 mb-2">
+              • Bạn cần ít nhất 0.01 MATIC trên <strong>Polygon Amoy testnet</strong>
+            </p>
+            <p className="text-xs text-red-200 mb-2">
+              • ETH trên mainnet không thể dùng cho testnet
+            </p>
+            <p className="text-xs text-blue-300">
+              💡 Nhận MATIC testnet miễn phí từ các faucet bên phải ↗️
+            </p>
+            <div className="mt-2">
+              <TestnetGuide walletAddress={walletAddress} />
+            </div>
           </div>
         )}
       </CardContent>
