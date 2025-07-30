@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "@/hooks/use-toast"
-import { Wallet, ChevronDown, LogOut, RefreshCw } from "lucide-react"
+import { Wallet, ChevronDown, LogOut, RefreshCw, ExternalLink, AlertTriangle } from "lucide-react"
 
 interface WalletConnectProps {
   onWalletConnect: (address: string) => void
@@ -14,14 +15,15 @@ export default function WalletConnect({ onWalletConnect }: WalletConnectProps) {
   const [connecting, setConnecting] = useState(false)
   const [connected, setConnected] = useState(false)
   const [walletAddress, setWalletAddress] = useState<string>("")
+  const [hasMetaMask, setHasMetaMask] = useState<boolean | null>(null)
+
+  const openMetaMaskInstall = () => {
+    window.open("https://metamask.io/download/", "_blank")
+  }
 
   const connectWallet = async () => {
     if (typeof window.ethereum === "undefined") {
-      toast({
-        title: "MetaMask không được tìm thấy",
-        description: "Vui lòng cài đặt MetaMask để tiếp tục.",
-        variant: "destructive",
-      })
+      setHasMetaMask(false)
       return
     }
 
@@ -109,25 +111,64 @@ export default function WalletConnect({ onWalletConnect }: WalletConnectProps) {
     }
   }
 
-  // Check if wallet is already connected on component mount
+  // Check if MetaMask is installed and wallet is already connected on component mount
   useEffect(() => {
     const checkConnection = async () => {
-      if (window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: "eth_accounts" })
-          if (accounts.length > 0) {
-            setConnected(true)
-            setWalletAddress(accounts[0])
-            onWalletConnect(accounts[0])
-          }
-        } catch (error) {
-          console.error("Error checking wallet connection:", error)
+      if (typeof window.ethereum === "undefined") {
+        setHasMetaMask(false)
+        return
+      }
+
+      setHasMetaMask(true)
+      try {
+        const accounts = await window.ethereum.request({ method: "eth_accounts" })
+        if (accounts.length > 0) {
+          setConnected(true)
+          setWalletAddress(accounts[0])
+          onWalletConnect(accounts[0])
         }
+      } catch (error) {
+        console.error("Error checking wallet connection:", error)
       }
     }
     checkConnection()
   }, [])
 
+  // Show MetaMask installation prompt if not installed
+  if (hasMetaMask === false) {
+    return (
+      <div className="flex flex-col gap-3">
+        <Alert className="border-orange-500/30 bg-orange-500/10">
+          <AlertTriangle className="h-4 w-4 text-orange-400" />
+          <AlertDescription className="text-orange-300">
+            <div className="flex flex-col gap-2">
+              <span>MetaMask extension chưa được cài đặt</span>
+              <Button
+                onClick={openMetaMaskInstall}
+                size="sm"
+                className="bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-semibold w-fit"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Cài đặt MetaMask
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  // Show loading state while checking MetaMask
+  if (hasMetaMask === null) {
+    return (
+      <Button disabled className="bg-gray-600 text-gray-300">
+        <Wallet className="h-4 w-4 mr-2" />
+        <span className="animate-pulse">Checking...</span>
+      </Button>
+    )
+  }
+
+  // Show connect button if MetaMask is installed but not connected
   if (!connected) {
     return (
       <Button

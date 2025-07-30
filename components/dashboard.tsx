@@ -4,6 +4,7 @@ import CreateNFTForm from "@/components/create-nft-form"
 import CreateNFTModal from "@/components/create-nft-modal"
 import MarketplaceGallery from "@/components/marketplace-gallery"
 import MaticBalance from "@/components/matic-balance"
+import MetaMaskInstallGuide from "@/components/metamask-install-guide"
 import NFTCreationStatus from "@/components/nft-creation-status"
 import NFTGallery from "@/components/nft-gallery"
 import NFTStats from "@/components/nft-stats"
@@ -18,7 +19,7 @@ import { auth } from "@/lib/firebase"
 import type { User } from "firebase/auth"
 import { signOut } from "firebase/auth"
 import { Clock, GalleryThumbnailsIcon as Gallery, LogOut, Palette, Plus, Send, Wallet, Copy, CheckCircle } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface DashboardProps {
   user: User
@@ -29,6 +30,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
   const [activeTab, setActiveTab] = useState("marketplace")
   const [copiedAddress, setCopiedAddress] = useState(false)
+  const [hasMetaMask, setHasMetaMask] = useState<boolean | null>(null)
 
   const handleSignOut = async () => {
     try {
@@ -78,6 +80,14 @@ export default function Dashboard({ user }: DashboardProps) {
       setCopiedAddress(false)
     }
   }
+
+  // Check MetaMask availability on component mount
+  useEffect(() => {
+    const checkMetaMask = () => {
+      setHasMetaMask(typeof window.ethereum !== "undefined")
+    }
+    checkMetaMask()
+  }, [])
 
   return (
     <div className="min-h-screen subtle-grid">
@@ -153,8 +163,15 @@ export default function Dashboard({ user }: DashboardProps) {
           </Card>
         )}
 
+        {/* MetaMask Install Guide */}
+        {hasMetaMask === false && (
+          <div className="mb-6">
+            <MetaMaskInstallGuide />
+          </div>
+        )}
+
         {/* MATIC Balance & NFT Status */}
-        {walletAddress && (
+        {walletAddress && hasMetaMask && (
           <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <MaticBalance walletAddress={walletAddress} />
             <NFTCreationStatus
@@ -166,9 +183,10 @@ export default function Dashboard({ user }: DashboardProps) {
         )}
 
         {/* Stats Overview */}
-        {walletAddress && <NFTStats userId={user.uid} />}
+        {walletAddress && hasMetaMask && <NFTStats userId={user.uid} />}
 
-        {/* Main Navigation */}
+        {/* Main Navigation - Only show if MetaMask is available */}
+        {hasMetaMask && (
         <div className="mb-8">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto bg-black/20 border border-purple-500/30 p-1">
@@ -276,6 +294,7 @@ export default function Dashboard({ user }: DashboardProps) {
             </TabsContent>
           </Tabs>
         </div>
+        )}
       </div>
     </div>
   )
