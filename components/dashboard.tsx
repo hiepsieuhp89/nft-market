@@ -17,7 +17,7 @@ import { toast } from "@/hooks/use-toast"
 import { auth } from "@/lib/firebase"
 import type { User } from "firebase/auth"
 import { signOut } from "firebase/auth"
-import { Clock, GalleryThumbnailsIcon as Gallery, LogOut, Palette, Plus, Send, Wallet } from "lucide-react"
+import { Clock, GalleryThumbnailsIcon as Gallery, LogOut, Palette, Plus, Send, Wallet, Copy, CheckCircle } from "lucide-react"
 import { useState } from "react"
 
 interface DashboardProps {
@@ -28,6 +28,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const [walletAddress, setWalletAddress] = useState<string>("")
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
   const [activeTab, setActiveTab] = useState("marketplace")
+  const [copiedAddress, setCopiedAddress] = useState(false)
 
   const handleSignOut = async () => {
     try {
@@ -48,6 +49,34 @@ export default function Dashboard({ user }: DashboardProps) {
   const handleNFTCreated = () => {
     // Trigger refresh for all components
     setRefreshTrigger(Date.now())
+  }
+
+  const copyWalletAddress = async () => {
+    if (walletAddress) {
+      try {
+        await navigator.clipboard.writeText(walletAddress)
+        setCopiedAddress(true)
+        toast({
+          title: "Đã copy địa chỉ ví",
+          description: "Địa chỉ ví đã được copy vào clipboard",
+        })
+        setTimeout(() => setCopiedAddress(false), 2000)
+      } catch (error) {
+        toast({
+          title: "Lỗi copy",
+          description: "Không thể copy địa chỉ ví",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
+  const handleWalletConnect = (address: string) => {
+    setWalletAddress(address)
+    if (!address) {
+      // Reset state when wallet is disconnected
+      setCopiedAddress(false)
+    }
   }
 
   return (
@@ -74,7 +103,30 @@ export default function Dashboard({ user }: DashboardProps) {
             {walletAddress && (
               <CreateNFTModal userId={user.uid} walletAddress={walletAddress} />
             )}
-            <WalletConnect onWalletConnect={setWalletAddress} />
+            <WalletConnect onWalletConnect={handleWalletConnect} />
+            {walletAddress && (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                  <Wallet className="h-4 w-4 text-purple-400" />
+                  <code className="text-purple-300 text-sm font-mono">
+                    {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                  </code>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copyWalletAddress}
+                  className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10 transition-all duration-200"
+                  title="Copy wallet address"
+                >
+                  {copiedAddress ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            )}
             <Button
               variant="outline"
               onClick={handleSignOut}
