@@ -30,6 +30,7 @@ export default function CreateNFTForm({ userId, walletAddress, onSuccess }: Crea
   })
   const [loading, setLoading] = useState(false)
   const [transactionDetails, setTransactionDetails] = useState<any>(null)
+  const [creationStep, setCreationStep] = useState<string>("")
 
   // Xóa imagePreview và handleImageChange
   // Thêm validation cho image URL
@@ -69,10 +70,12 @@ export default function CreateNFTForm({ userId, walletAddress, onSuccess }: Crea
     }
 
     setLoading(true)
+    setCreationStep("Đang kiểm tra mạng...")
     try {
       // Check if connected to correct network
       await checkNetwork()
 
+      setCreationStep("Đang kiểm tra số dư MATIC...")
       // Check MATIC balance before creating NFT
       const balanceInfo = await checkMaticBalance(walletAddress)
       if (!balanceInfo.hasEnoughForGas) {
@@ -82,9 +85,11 @@ export default function CreateNFTForm({ userId, walletAddress, onSuccess }: Crea
           variant: "destructive",
         })
         setLoading(false)
+        setCreationStep("")
         return
       }
 
+      setCreationStep("Đang tạo NFT trên blockchain...")
       const result = await createNFT({
         ...formData,
         userId,
@@ -92,11 +97,12 @@ export default function CreateNFTForm({ userId, walletAddress, onSuccess }: Crea
         price: Number.parseFloat(formData.price),
       })
 
+      setCreationStep("Hoàn thành!")
       setTransactionDetails(result)
 
       toast({
-        title: "NFT đã được tạo thành công!",
-        description: `Token ID: ${result.tokenId}`,
+        title: "🎉 NFT đã được tạo thành công!",
+        description: `Token ID: #${result.tokenId} | Transaction: ${result.transactionHash.slice(0, 10)}...${result.transactionHash.slice(-8)}`,
       })
 
       // Call onSuccess callback if provided
@@ -109,12 +115,16 @@ export default function CreateNFTForm({ userId, walletAddress, onSuccess }: Crea
         description: "",
         imageUrl: "",
       })
+
+      // Clear creation step after a delay
+      setTimeout(() => setCreationStep(""), 2000)
     } catch (error: any) {
       toast({
         title: "Lỗi tạo NFT",
         description: error.message,
         variant: "destructive",
       })
+      setCreationStep("")
     }
     setLoading(false)
   }
@@ -209,7 +219,9 @@ export default function CreateNFTForm({ userId, walletAddress, onSuccess }: Crea
             {loading ? (
               <>
                 <Loader2 className="h-6 w-6 mr-3 animate-spin" />
-                <span className="animate-pulse">MINTING ASSET...</span>
+                <span className="animate-pulse">
+                  {creationStep || "ĐANG TẠO NFT..."}
+                </span>
               </>
             ) : (
               <>
@@ -221,38 +233,47 @@ export default function CreateNFTForm({ userId, walletAddress, onSuccess }: Crea
         </form>
       </CardContent>
       {transactionDetails && (
-        <div className="mt-8 p-6 bg-green-50 border border-green-300 rounded-lg">
-          <h3 className="font-bold text-green-700 mb-4 text-xl text-center">
-            🎉 ASSET SUCCESSFULLY MINTED!
+        <div className="mt-8 p-6 bg-green-500/10 border border-green-500/30 rounded-lg professional-card">
+          <h3 className="font-bold text-green-400 mb-4 text-xl text-center flex items-center justify-center gap-2">
+            🎉 NFT ĐÃ ĐƯỢC TẠO THÀNH CÔNG!
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-300">
-              <span className="text-green-700 font-bold text-sm uppercase tracking-wider">Token ID:</span>
+            <div className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-green-500/20">
+              <span className="text-green-300 font-bold text-sm uppercase tracking-wider">Token ID:</span>
               <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold">
                 #{transactionDetails.tokenId}
               </Badge>
             </div>
-            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-300">
-              <span className="text-green-700 font-bold text-sm uppercase tracking-wider">Transaction:</span>
+            <div className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-green-500/20">
+              <span className="text-green-300 font-bold text-sm uppercase tracking-wider">Transaction Hash:</span>
               <a
                 href={`https://amoy.polygonscan.com/tx/${transactionDetails.transactionHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-green-600 hover:text-green-500 font-bold font-mono transition-colors"
+                className="flex items-center gap-2 text-green-400 hover:text-green-300 font-bold font-mono transition-colors"
               >
                 <span className="text-xs">
-                  {transactionDetails.transactionHash.slice(0, 8)}...{transactionDetails.transactionHash.slice(-6)}
+                  {transactionDetails.transactionHash.slice(0, 10)}...{transactionDetails.transactionHash.slice(-8)}
                 </span>
                 <ExternalLink className="h-4 w-4" />
               </a>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Block Number:</span>
-              <span className="font-mono text-xs">{transactionDetails.blockNumber}</span>
+            <div className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-purple-500/20">
+              <span className="text-purple-300 font-medium">Block Number:</span>
+              <span className="font-mono text-sm text-purple-200">{transactionDetails.blockNumber}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Gas Used:</span>
-              <span className="font-mono text-xs">{transactionDetails.gasUsed}</span>
+            <div className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-purple-500/20">
+              <span className="text-purple-300 font-medium">Gas Used:</span>
+              <span className="font-mono text-sm text-purple-200">{transactionDetails.gasUsed}</span>
+            </div>
+            <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <p className="text-blue-300 text-sm text-center">
+                ✅ NFT của bạn đã được mint thành công trên Polygon Amoy testnet!
+                <br />
+                <span className="text-blue-200 text-xs">
+                  Bạn có thể xem NFT trong tab "My Assets" hoặc kiểm tra transaction trên PolygonScan
+                </span>
+              </p>
             </div>
           </div>
         </div>

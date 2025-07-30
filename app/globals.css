@@ -9,6 +9,21 @@
     text-wrap: balance;
   }
 
+  /* Line clamp utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
   /* Professional Purple Theme Utilities */
   .purple-glow {
     box-shadow: 0 0 15px rgba(107, 70, 193, 0.2), 0 0 30px rgba(107, 70, 193, 0.1);

@@ -97,8 +97,11 @@ export const mintNFT = async (
     // Wait for transaction confirmation
     const receipt = await transaction.wait()
 
-    // Extract token ID from events
-    const mintEvent = receipt.logs.find((log: any) => {
+    // Extract token ID from events - try both NFTMinted and Transfer events
+    let tokenId = null
+
+    // First try NFTMinted event
+    const nftMintedEvent = receipt.logs.find((log: any) => {
       try {
         const parsedLog = contract.interface.parseLog(log)
         return parsedLog?.name === "NFTMinted"
@@ -107,10 +110,36 @@ export const mintNFT = async (
       }
     })
 
-    let tokenId = null
-    if (mintEvent) {
-      const parsedLog = contract.interface.parseLog(mintEvent)
+    if (nftMintedEvent) {
+      const parsedLog = contract.interface.parseLog(nftMintedEvent)
       tokenId = parsedLog?.args?.tokenId?.toString()
+      console.log("Found NFTMinted event, tokenId:", tokenId)
+    } else {
+      // Fallback to Transfer event (ERC721 standard)
+      const transferEvent = receipt.logs.find((log: any) => {
+        try {
+          const parsedLog = contract.interface.parseLog(log)
+          return parsedLog?.name === "Transfer" && parsedLog?.args?.from === "0x0000000000000000000000000000000000000000"
+        } catch {
+          return false
+        }
+      })
+
+      if (transferEvent) {
+        const parsedLog = contract.interface.parseLog(transferEvent)
+        tokenId = parsedLog?.args?.tokenId?.toString()
+        console.log("Found Transfer event (mint), tokenId:", tokenId)
+      } else {
+        console.error("Neither NFTMinted nor Transfer event found")
+        console.log("Available logs:", receipt.logs.map((log: any) => {
+          try {
+            const parsed = contract.interface.parseLog(log)
+            return { name: parsed?.name, args: parsed?.args }
+          } catch {
+            return { error: "Could not parse log" }
+          }
+        }))
+      }
     }
 
     return {

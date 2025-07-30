@@ -2,7 +2,9 @@
 
 import CreateNFTForm from "@/components/create-nft-form"
 import CreateNFTModal from "@/components/create-nft-modal"
+import MarketplaceGallery from "@/components/marketplace-gallery"
 import MaticBalance from "@/components/matic-balance"
+import NFTCreationStatus from "@/components/nft-creation-status"
 import NFTGallery from "@/components/nft-gallery"
 import NFTStats from "@/components/nft-stats"
 import TransactionHistory from "@/components/transaction-history"
@@ -24,6 +26,7 @@ interface DashboardProps {
 
 export default function Dashboard({ user }: DashboardProps) {
   const [walletAddress, setWalletAddress] = useState<string>("")
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
   const [activeTab, setActiveTab] = useState("marketplace")
 
   const handleSignOut = async () => {
@@ -40,6 +43,11 @@ export default function Dashboard({ user }: DashboardProps) {
         variant: "destructive",
       })
     }
+  }
+
+  const handleNFTCreated = () => {
+    // Trigger refresh for all components
+    setRefreshTrigger(Date.now())
   }
 
   return (
@@ -93,10 +101,15 @@ export default function Dashboard({ user }: DashboardProps) {
           </Card>
         )}
 
-        {/* MATIC Balance */}
+        {/* MATIC Balance & NFT Status */}
         {walletAddress && (
-          <div className="mb-6">
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <MaticBalance walletAddress={walletAddress} />
+            <NFTCreationStatus
+              userId={user.uid}
+              walletAddress={walletAddress}
+              refreshTrigger={refreshTrigger}
+            />
           </div>
         )}
 
@@ -147,7 +160,7 @@ export default function Dashboard({ user }: DashboardProps) {
                   Explore and discover unique digital assets from creators around the world
                 </p>
               </div>
-              <NFTGallery userId={user.uid} walletAddress={walletAddress} />
+              <MarketplaceGallery refreshTrigger={refreshTrigger} />
             </TabsContent>
 
             {/* Create NFT Tab */}
@@ -160,7 +173,11 @@ export default function Dashboard({ user }: DashboardProps) {
                   Mint your unique digital creation on the blockchain
                 </p>
               </div>
-              <CreateNFTForm userId={user.uid} walletAddress={walletAddress} />
+              <CreateNFTForm
+                userId={user.uid}
+                walletAddress={walletAddress}
+                onSuccess={handleNFTCreated}
+              />
             </TabsContent>
 
             {/* My Assets Tab */}
@@ -176,7 +193,11 @@ export default function Dashboard({ user }: DashboardProps) {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
                   <h3 className="text-lg font-semibold text-purple-400 mb-4">Your Collection</h3>
-                  <NFTGallery userId={user.uid} walletAddress={walletAddress} />
+                  <NFTGallery
+                    userId={user.uid}
+                    walletAddress={walletAddress}
+                    refreshTrigger={refreshTrigger}
+                  />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-purple-400 mb-4">Transfer Assets</h3>
@@ -195,7 +216,11 @@ export default function Dashboard({ user }: DashboardProps) {
                   Track all your blockchain transactions and activities
                 </p>
               </div>
-              <TransactionHistory userId={user.uid} walletAddress={walletAddress} />
+              <TransactionHistory
+                userId={user.uid}
+                walletAddress={walletAddress || ""}
+                refreshTrigger={refreshTrigger}
+              />
             </TabsContent>
           </Tabs>
         </div>

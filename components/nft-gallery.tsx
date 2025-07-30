@@ -25,9 +25,10 @@ interface NFT {
 interface NFTGalleryProps {
   userId: string
   walletAddress: string
+  refreshTrigger?: number
 }
 
-export default function NFTGallery({ userId, walletAddress }: NFTGalleryProps) {
+export default function NFTGallery({ userId, walletAddress, refreshTrigger }: NFTGalleryProps) {
   const [nfts, setNfts] = useState<NFT[]>([])
   const [loading, setLoading] = useState(true)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -66,7 +67,7 @@ export default function NFTGallery({ userId, walletAddress }: NFTGalleryProps) {
     }
 
     fetchNFTs()
-  }, [userId])
+  }, [userId, refreshTrigger])
 
   useEffect(() => {
     checkScrollButtons()

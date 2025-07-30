@@ -157,6 +157,25 @@ export const getNFTsByUser = async (userId: string, walletAddress?: string) => {
   }
 }
 
+// Get all NFTs for marketplace (from all users)
+export const getAllNFTs = async () => {
+  try {
+    // Get all NFTs from Firestore that haven't been transferred
+    const q = query(collection(db, "nfts"), where("isTransferred", "==", false))
+    const querySnapshot = await getDocs(q)
+
+    const nfts = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+
+    return nfts
+  } catch (error: any) {
+    console.error("Error fetching all NFTs:", error)
+    throw new Error(`Không thể lấy danh sách NFT: ${error.message}`)
+  }
+}
+
 export const transferNFT = async (nftId: string, recipientAddress: string, senderAddress: string) => {
   try {
     // Get NFT data from Firestore

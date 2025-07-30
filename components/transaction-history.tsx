@@ -26,17 +26,25 @@ interface Transaction {
 interface TransactionHistoryProps {
   userId: string
   walletAddress: string
+  refreshTrigger?: number // Để trigger refresh từ bên ngoài
 }
 
-export default function TransactionHistory({ userId, walletAddress }: TransactionHistoryProps) {
+export default function TransactionHistory({ userId, walletAddress, refreshTrigger }: TransactionHistoryProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
   const fetchTransactions = async () => {
     try {
+      console.log("Fetching transactions for:", { userId, walletAddress })
       const history = await getTransactionHistory(userId, walletAddress)
-      setTransactions(history)
+      console.log("Fetched transactions:", history)
+      // Map TransactionRecord to Transaction interface
+      const mappedTransactions = history.map(tx => ({
+        ...tx,
+        id: tx.id || ""
+      }))
+      setTransactions(mappedTransactions)
     } catch (error) {
       console.error("Error fetching transaction history:", error)
     }
@@ -46,21 +54,23 @@ export default function TransactionHistory({ userId, walletAddress }: Transactio
 
   useEffect(() => {
     fetchTransactions()
-  }, [userId, walletAddress])
+  }, [userId, walletAddress, refreshTrigger])
 
   const handleRefresh = async () => {
     setRefreshing(true)
     await fetchTransactions()
   }
 
+
+
   const getTransactionIcon = (type: string) => {
     switch (type) {
       case "mint":
-        return <Plus className="h-4 w-4 text-green-600" />
+        return <Plus className="h-4 w-4 text-green-400" />
       case "transfer":
-        return <Send className="h-4 w-4 text-blue-600" />
+        return <Send className="h-4 w-4 text-blue-400" />
       default:
-        return <Coins className="h-4 w-4 text-gray-600" />
+        return <Coins className="h-4 w-4 text-purple-400" />
     }
   }
 
@@ -68,20 +78,28 @@ export default function TransactionHistory({ userId, walletAddress }: Transactio
     switch (status) {
       case "confirmed":
         return (
-          <Badge variant="secondary" className="text-green-700 bg-green-100">
+          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
             Đã xác nhận
           </Badge>
         )
       case "pending":
         return (
-          <Badge variant="outline" className="text-yellow-700 bg-yellow-100">
+          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
             Đang xử lý
           </Badge>
         )
       case "failed":
-        return <Badge variant="destructive">Thất bại</Badge>
+        return (
+          <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+            Thất bại
+          </Badge>
+        )
       default:
-        return <Badge variant="outline">Không xác định</Badge>
+        return (
+          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+            Không xác định
+          </Badge>
+        )
     }
   }
 
@@ -94,17 +112,23 @@ export default function TransactionHistory({ userId, walletAddress }: Transactio
   }
 
   return (
-    <Card>
+    <Card className="professional-card">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-purple-300">
+              <Clock className="h-5 w-5 text-purple-400" />
               Lịch sử giao dịch
             </CardTitle>
-            <CardDescription>Theo dõi tất cả hoạt động mint và transfer NFT</CardDescription>
+            <CardDescription className="text-purple-300/80">Theo dõi tất cả hoạt động mint và transfer NFT</CardDescription>
           </div>
-          <Button onClick={handleRefresh} disabled={refreshing} variant="outline" size="sm">
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
+            className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10"
+          >
             {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Làm mới"}
           </Button>
         </div>
@@ -112,45 +136,45 @@ export default function TransactionHistory({ userId, walletAddress }: Transactio
       <CardContent>
         {transactions.length === 0 ? (
           <div className="text-center py-8">
-            <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Chưa có giao dịch nào</h3>
-            <p className="text-gray-600">Lịch sử giao dịch sẽ hiển thị ở đây sau khi bạn mint hoặc transfer NFT.</p>
+            <Clock className="h-16 w-16 text-purple-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-purple-300">Chưa có giao dịch nào</h3>
+            <p className="text-purple-300/60">Lịch sử giao dịch sẽ hiển thị ở đây sau khi bạn mint hoặc transfer NFT.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {transactions.map((tx) => (
-              <div key={tx.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div key={tx.id} className="border border-purple-500/20 rounded-lg p-4 hover:bg-purple-500/5 transition-colors bg-black/20">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
                     {getTransactionIcon(tx.type)}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold">{tx.type === "mint" ? "Mint NFT" : "Transfer NFT"}</h4>
+                        <h4 className="font-semibold text-purple-300">{tx.type === "mint" ? "Mint NFT" : "Transfer NFT"}</h4>
                         {getStatusBadge(tx.status)}
                       </div>
 
                       {tx.nftName && (
-                        <p className="text-sm text-gray-600 mb-1">
-                          NFT: <span className="font-medium">{tx.nftName}</span>
+                        <p className="text-sm text-purple-300/80 mb-1">
+                          NFT: <span className="font-medium text-purple-200">{tx.nftName}</span>
                         </p>
                       )}
 
                       {tx.tokenId && (
-                        <p className="text-sm text-gray-600 mb-1">
-                          Token ID: <span className="font-mono">#{tx.tokenId}</span>
+                        <p className="text-sm text-purple-300/80 mb-1">
+                          Token ID: <span className="font-mono text-purple-200">#{tx.tokenId}</span>
                         </p>
                       )}
 
                       {tx.type === "transfer" && tx.to && (
-                        <p className="text-sm text-gray-600 mb-1">
+                        <p className="text-sm text-purple-300/80 mb-1">
                           Đến:{" "}
-                          <span className="font-mono">
+                          <span className="font-mono text-purple-200">
                             {tx.to.slice(0, 6)}...{tx.to.slice(-4)}
                           </span>
                         </p>
                       )}
 
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+                      <div className="flex items-center gap-4 text-xs text-purple-400/60 mt-2">
                         <span>Block: {tx.blockNumber}</span>
                         <span>Gas: {tx.gasUsed}</span>
                         <span>
@@ -166,7 +190,7 @@ export default function TransactionHistory({ userId, walletAddress }: Transactio
                     href={`https://amoy.polygonscan.com/tx/${tx.transactionHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+                    className="flex items-center gap-1 text-purple-400 hover:text-purple-300 text-sm transition-colors"
                   >
                     <span>Xem</span>
                     <ExternalLink className="h-3 w-3" />
