@@ -41,6 +41,20 @@ typechain-types/
 # deployment
 deployments/
 
+# backend specific
+backend/dist/
+backend/node_modules/
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.test
+backend/.env.production
+backend/coverage/
+backend/.nyc_output/
+backend/logs/
+backend/tmp/
+backend/temp/
+
 # local env files
 .env.local
 .env.development.local
