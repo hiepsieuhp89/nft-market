@@ -6,100 +6,35 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "@/hooks/use-toast"
 import { Palette, Loader2 } from "lucide-react"
-import { auth } from "@/lib/firebase"
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"
+import { useRegister, useLogin } from "@/hooks/use-api"
 
 export default function AuthForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [displayName, setDisplayName] = useState("")
 
-  const getErrorMessage = (error: any) => {
-    switch (error.code) {
-      case "auth/user-not-found":
-        return "Không tìm thấy tài khoản với email này"
-      case "auth/wrong-password":
-        return "Mật khẩu không chính xác"
-      case "auth/email-already-in-use":
-        return "Email này đã được sử dụng"
-      case "auth/weak-password":
-        return "Mật khẩu quá yếu (tối thiểu 6 ký tự)"
-      case "auth/invalid-email":
-        return "Email không hợp lệ"
-      case "auth/network-request-failed":
-        return "Lỗi kết nối mạng"
-      case "auth/too-many-requests":
-        return "Quá nhiều yêu cầu. Vui lòng thử lại sau."
-      default:
-        return error.message || "Đã xảy ra lỗi không xác định"
-    }
-  }
+  const registerMutation = useRegister()
+  const loginMutation = useLogin()
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      toast({
-        title: "Vui lòng điền đầy đủ thông tin",
-        description: "Email và mật khẩu không được để trống.",
-        variant: "destructive",
-      })
       return
     }
 
-    setLoading(true)
-    try {
-      await signInWithEmailAndPassword(auth, email, password)
-      toast({
-        title: "Đăng nhập thành công!",
-        description: "Chào mừng bạn quay trở lại.",
-      })
-    } catch (error: any) {
-      console.error("Sign in error:", error)
-      toast({
-        title: "Lỗi đăng nhập",
-        description: getErrorMessage(error),
-        variant: "destructive",
-      })
-    }
-    setLoading(false)
+    loginMutation.mutate({ email, password })
   }
 
   const handleSignUp = async () => {
     if (!email || !password) {
-      toast({
-        title: "Vui lòng điền đầy đủ thông tin",
-        description: "Email và mật khẩu không được để trống.",
-        variant: "destructive",
-      })
       return
     }
 
     if (password.length < 6) {
-      toast({
-        title: "Mật khẩu quá ngắn",
-        description: "Mật khẩu phải có ít nhất 6 ký tự.",
-        variant: "destructive",
-      })
       return
     }
 
-    setLoading(true)
-    try {
-      await createUserWithEmailAndPassword(auth, email, password)
-      toast({
-        title: "Đăng ký thành công!",
-        description: "Tài khoản của bạn đã được tạo.",
-      })
-    } catch (error: any) {
-      console.error("Sign up error:", error)
-      toast({
-        title: "Lỗi đăng ký",
-        description: getErrorMessage(error),
-        variant: "destructive",
-      })
-    }
-    setLoading(false)
+    registerMutation.mutate({ email, password, displayName })
   }
 
   return (
@@ -155,7 +90,7 @@ export default function AuthForm() {
                     placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={loading}
+                    disabled={loginMutation.isPending}
                     className="bg-black/20 border-purple-500/30 text-purple-100 placeholder:text-purple-400/50 focus:border-purple-500 focus:ring-purple-500/20"
                   />
                 </div>
@@ -169,7 +104,7 @@ export default function AuthForm() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
+                    disabled={loginMutation.isPending}
                     onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
                     className="bg-black/20 border-purple-500/30 text-purple-100 placeholder:text-purple-400/50 focus:border-purple-500 focus:ring-purple-500/20"
                   />
@@ -177,9 +112,9 @@ export default function AuthForm() {
                 <Button
                   onClick={handleSignIn}
                   className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold py-3 purple-glow-soft transition-all duration-200 hover-lift"
-                  disabled={loading}
+                  disabled={loginMutation.isPending}
                 >
-                  {loading ? (
+                  {loginMutation.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Signing in...
@@ -201,7 +136,21 @@ export default function AuthForm() {
                     placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={loading}
+                    disabled={registerMutation.isPending}
+                    className="bg-black/20 border-purple-500/30 text-purple-100 placeholder:text-purple-400/50 focus:border-purple-500 focus:ring-purple-500/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="displayName-signup" className="text-purple-300 font-medium">
+                    Display Name (Optional)
+                  </Label>
+                  <Input
+                    id="displayName-signup"
+                    type="text"
+                    placeholder="Your display name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    disabled={registerMutation.isPending}
                     className="bg-black/20 border-purple-500/30 text-purple-100 placeholder:text-purple-400/50 focus:border-purple-500 focus:ring-purple-500/20"
                   />
                 </div>
@@ -215,7 +164,7 @@ export default function AuthForm() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
+                    disabled={registerMutation.isPending}
                     onKeyDown={(e) => e.key === "Enter" && handleSignUp()}
                     className="bg-black/20 border-purple-500/30 text-purple-100 placeholder:text-purple-400/50 focus:border-purple-500 focus:ring-purple-500/20"
                   />
@@ -224,9 +173,9 @@ export default function AuthForm() {
                 <Button
                   onClick={handleSignUp}
                   className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold py-3 purple-glow-soft transition-all duration-200 hover-lift"
-                  disabled={loading}
+                  disabled={registerMutation.isPending}
                 >
-                  {loading ? (
+                  {registerMutation.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Creating account...

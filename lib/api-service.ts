@@ -1,10 +1,50 @@
-// API service for backend communication
+// API service for backend communication with React Query
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-interface ApiResponse<T = any> {
-  data?: T;
-  error?: string;
-  message?: string;
+export interface User {
+  uid: string;
+  email: string;
+  displayName: string;
+  walletAddress: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+}
+
+export interface WalletInfo {
+  address: string;
+  balance: string;
+  balanceInEth: string;
+}
+
+export interface NFT {
+  id: string;
+  tokenId: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  price: number;
+  walletAddress: string;
+  transactionHash: string;
+  blockNumber: number;
+  createdAt: any;
+  isTransferred: boolean;
+}
+
+export interface Transaction {
+  id: string;
+  userId: string;
+  walletAddress: string;
+  type: 'mint' | 'transfer';
+  tokenId: string;
+  nftName: string;
+  transactionHash: string;
+  blockNumber: number;
+  status: 'confirmed' | 'failed';
+  createdAt: any;
+  recipientAddress?: string;
 }
 
 class ApiService {
@@ -36,67 +76,58 @@ class ApiService {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
+  ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
-    const headers: HeadersInit = {
+
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
     }
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        return {
-          error: data.message || data.error || 'An error occurred',
-        };
-      }
-
-      return { data };
-    } catch (error) {
-      console.error('API request failed:', error);
-      return {
-        error: 'Network error occurred',
-      };
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'An error occurred');
     }
+
+    return data;
   }
 
   // Authentication endpoints
-  async register(email: string, password: string, displayName?: string) {
-    return this.request('/auth/register', {
+  async register(email: string, password: string, displayName?: string): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, displayName }),
     });
   }
 
-  async login(email: string, password: string) {
-    return this.request('/auth/login', {
+  async login(email: string, password: string): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   }
 
-  async getProfile() {
-    return this.request('/auth/profile');
+  async getProfile(): Promise<User> {
+    return this.request<User>('/auth/profile');
   }
 
   // Wallet endpoints
-  async getWalletInfo() {
-    return this.request('/wallet/info');
+  async getWalletInfo(): Promise<WalletInfo> {
+    return this.request<WalletInfo>('/wallet/info');
   }
 
-  async getWalletBalance(address: string) {
-    return this.request(`/wallet/balance/${address}`);
+  async getWalletBalance(address: string): Promise<{ balance: string; balanceInEth: string }> {
+    return this.request<{ balance: string; balanceInEth: string }>(`/wallet/balance/${address}`);
   }
 
   // NFT endpoints
@@ -105,30 +136,30 @@ class ApiService {
     description: string;
     imageUrl: string;
     price: number;
-  }) {
-    return this.request('/nft/mint', {
+  }): Promise<any> {
+    return this.request<any>('/nft/mint', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async transferNFT(tokenId: string, to: string) {
-    return this.request('/nft/transfer', {
+  async transferNFT(tokenId: string, to: string): Promise<any> {
+    return this.request<any>('/nft/transfer', {
       method: 'POST',
       body: JSON.stringify({ tokenId, to }),
     });
   }
 
-  async getUserNFTs() {
-    return this.request('/nft/my-nfts');
+  async getUserNFTs(): Promise<NFT[]> {
+    return this.request<NFT[]>('/nft/my-nfts');
   }
 
-  async getNFTDetails(tokenId: string) {
-    return this.request(`/nft/details/${tokenId}`);
+  async getNFTDetails(tokenId: string): Promise<NFT> {
+    return this.request<NFT>(`/nft/details/${tokenId}`);
   }
 
-  async getTransactionHistory() {
-    return this.request('/nft/transactions');
+  async getTransactionHistory(): Promise<Transaction[]> {
+    return this.request<Transaction[]>('/nft/transactions');
   }
 }
 

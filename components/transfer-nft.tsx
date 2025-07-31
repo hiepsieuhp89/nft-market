@@ -8,21 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/hooks/use-toast"
-import { getNFTsByUser, transferNFT } from "@/lib/nft-service"
-import { Loader2, Send, ExternalLink } from "lucide-react"
-import { checkNetwork } from "@/lib/blockchain-service"
+import { Loader2, Send } from "lucide-react"
+import { useUserNFTs, useTransferNFT } from "@/hooks/use-api"
+import type { NFT } from "@/lib/api-service"
 
-interface NFT {
-  id: string
-  name: string
-  description: string
-  price: number
-  imageUrl: string
-  createdAt: any
-  userId: string
-  walletAddress: string
-}
+
 
 interface TransferNFTProps {
   userId: string
@@ -30,92 +20,36 @@ interface TransferNFTProps {
 }
 
 export default function TransferNFT({ userId, walletAddress }: TransferNFTProps) {
-  const [nfts, setNfts] = useState<NFT[]>([])
   const [selectedNFT, setSelectedNFT] = useState<string>("")
   const [recipientAddress, setRecipientAddress] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [fetchingNFTs, setFetchingNFTs] = useState(true)
-  const [transactionDetails, setTransactionDetails] = useState<any>(null)
 
-  useEffect(() => {
-    const fetchNFTs = async () => {
-      try {
-        const userNFTs = await getNFTsByUser(userId)
-        setNfts(userNFTs)
-      } catch (error) {
-        console.error("Error fetching NFTs:", error)
-      }
-      setFetchingNFTs(false)
-    }
-
-    fetchNFTs()
-  }, [userId])
+  const { data: nfts = [], isLoading: loadingNFTs } = useUserNFTs()
+  const transferNFTMutation = useTransferNFT()
 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!walletAddress) {
-      toast({
-        title: "Vui lòng kết nối ví",
-        description: "Bạn cần kết nối ví MetaMask để chuyển NFT.",
-        variant: "destructive",
-      })
-      return
-    }
-
     if (!selectedNFT || !recipientAddress) {
-      toast({
-        title: "Vui lòng điền đầy đủ thông tin",
-        description: "Chọn NFT và nhập địa chỉ người nhận.",
-        variant: "destructive",
-      })
       return
     }
 
     // Validate Ethereum address
     if (!/^0x[a-fA-F0-9]{40}$/.test(recipientAddress)) {
-      toast({
-        title: "Địa chỉ không hợp lệ",
-        description: "Vui lòng nhập địa chỉ Ethereum hợp lệ.",
-        variant: "destructive",
-      })
       return
     }
 
-    setLoading(true)
-    try {
-      // Check if connected to correct network
-      await checkNetwork()
+    transferNFTMutation.mutate({ tokenId: selectedNFT, to: recipientAddress }, {
+      onSuccess: () => {
+        setSelectedNFT("")
+        setRecipientAddress("")
+      }
+    })
 
-      const result = await transferNFT(selectedNFT, recipientAddress, walletAddress)
-
-      setTransactionDetails(result)
-
-      toast({
-        title: "Chuyển NFT thành công!",
-        description: "NFT đã được chuyển đến địa chỉ người nhận.",
-      })
-
-      // Reset form
-      setSelectedNFT("")
-      setRecipientAddress("")
-
-      // Refresh NFT list
-      const userNFTs = await getNFTsByUser(userId, walletAddress)
-      setNfts(userNFTs)
-    } catch (error: any) {
-      toast({
-        title: "Lỗi chuyển NFT",
-        description: error.message,
-        variant: "destructive",
-      })
-    }
-    setLoading(false)
   }
 
   const selectedNFTData = nfts.find((nft) => nft.id === selectedNFT)
 
-  if (fetchingNFTs) {
+  if (loadingNFTs) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="relative">
@@ -212,9 +146,9 @@ export default function TransferNFT({ userId, walletAddress }: TransferNFTProps)
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold py-4 text-lg cyber-glow transition-all duration-300 transform hover:scale-105"
-                disabled={loading}
+                disabled={transferNFTMutation.isPending}
               >
-                {loading ? (
+                {transferNFTMutation.isPending ? (
                   <>
                     <Loader2 className="h-6 w-6 mr-3 animate-spin" />
                     <span className="animate-pulse">TRANSFERRING ASSET...</span>

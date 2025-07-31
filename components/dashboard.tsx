@@ -3,8 +3,6 @@
 import CreateNFTForm from "@/components/create-nft-form"
 import CreateNFTModal from "@/components/create-nft-modal"
 import MarketplaceGallery from "@/components/marketplace-gallery"
-import MaticBalance from "@/components/matic-balance"
-import MetaMaskInstallGuide from "@/components/metamask-install-guide"
 import NFTCreationStatus from "@/components/nft-creation-status"
 import NFTGallery from "@/components/nft-gallery"
 import NFTStats from "@/components/nft-stats"
@@ -13,39 +11,25 @@ import TransferNFT from "@/components/transfer-nft"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import WalletConnect from "@/components/wallet-connect"
-import { toast } from "@/hooks/use-toast"
-import { auth } from "@/lib/firebase"
-import type { User } from "firebase/auth"
-import { signOut } from "firebase/auth"
 import { Clock, GalleryThumbnailsIcon as Gallery, LogOut, Palette, Plus, Send, Wallet, Copy, CheckCircle } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useLogout, useWalletInfo } from "@/hooks/use-api"
+import type { User } from "@/lib/api-service"
 
 interface DashboardProps {
   user: User
 }
 
 export default function Dashboard({ user }: DashboardProps) {
-  const [walletAddress, setWalletAddress] = useState<string>("")
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
   const [activeTab, setActiveTab] = useState("marketplace")
   const [copiedAddress, setCopiedAddress] = useState(false)
-  const [hasMetaMask, setHasMetaMask] = useState<boolean | null>(null)
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth)
-      toast({
-        title: "Đăng xuất thành công",
-        description: "Hẹn gặp lại bạn!",
-      })
-    } catch (error: any) {
-      toast({
-        title: "Lỗi đăng xuất",
-        description: error.message,
-        variant: "destructive",
-      })
-    }
+  const logoutMutation = useLogout()
+  const { data: walletInfo } = useWalletInfo()
+
+  const handleSignOut = () => {
+    logoutMutation.mutate()
   }
 
   const handleNFTCreated = () => {
@@ -54,40 +38,17 @@ export default function Dashboard({ user }: DashboardProps) {
   }
 
   const copyWalletAddress = async () => {
-    if (walletAddress) {
+    if (walletInfo?.address) {
       try {
-        await navigator.clipboard.writeText(walletAddress)
+        await navigator.clipboard.writeText(walletInfo.address)
         setCopiedAddress(true)
-        toast({
-          title: "Đã copy địa chỉ ví",
-          description: "Địa chỉ ví đã được copy vào clipboard",
-        })
         setTimeout(() => setCopiedAddress(false), 2000)
       } catch (error) {
-        toast({
-          title: "Lỗi copy",
-          description: "Không thể copy địa chỉ ví",
-          variant: "destructive",
-        })
+        // Fallback for older browsers
+        console.error('Copy failed:', error)
       }
     }
   }
-
-  const handleWalletConnect = (address: string) => {
-    setWalletAddress(address)
-    if (!address) {
-      // Reset state when wallet is disconnected
-      setCopiedAddress(false)
-    }
-  }
-
-  // Check MetaMask availability on component mount
-  useEffect(() => {
-    const checkMetaMask = () => {
-      setHasMetaMask(typeof window.ethereum !== "undefined")
-    }
-    checkMetaMask()
-  }, [])
 
   return (
     <div className="min-h-screen subtle-grid">
@@ -105,15 +66,39 @@ export default function Dashboard({ user }: DashboardProps) {
                 NFT Marketplace
               </h1>
               <p className="text-purple-300 mt-1">
-                Welcome back, <span className="text-purple-400 font-medium">{user.email}</span>
+                Welcome back, <span className="text-purple-400 font-medium">{user.displayName || user.email}</span>
               </p>
+              {walletInfo && (
+                <p className="text-sm text-purple-400/70 mt-1">
+                  Wallet: {walletInfo.address.slice(0, 6)}...{walletInfo.address.slice(-4)}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {walletAddress && (
-              <CreateNFTModal userId={user.uid} walletAddress={walletAddress} />
+            {walletInfo && (
+              <CreateNFTModal userId={user.uid} walletAddress={walletInfo.address} />
             )}
-            <WalletConnect onWalletConnect={handleWalletConnect} />
+            {walletInfo && (
+              <Button
+                onClick={copyWalletAddress}
+                variant="outline"
+                size="sm"
+                className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10"
+              >
+                {copiedAddress ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Wallet
+                  </>
+                )}
+              </Button>
+            )}
             {walletAddress && (
               <div className="flex items-center gap-2">
                 <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg">
@@ -148,45 +133,45 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         </div>
 
-        {/* Wallet Connection Status */}
-        {walletAddress && (
+        {/* Wallet Status */}
+        {walletInfo && (
           <Card className="mb-6 professional-card border-green-500/30 purple-glow-soft">
             <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <Wallet className="h-4 w-4 text-green-400" />
-                <span className="text-green-400 font-medium">
-                  Wallet Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <Wallet className="h-4 w-4 text-green-400" />
+                  <span className="text-green-400 font-medium">
+                    Wallet: {walletInfo.address.slice(0, 6)}...{walletInfo.address.slice(-4)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-purple-300">Balance</p>
+                  <p className="text-lg font-semibold text-purple-400">
+                    {parseFloat(walletInfo.balanceInEth).toFixed(4)} MATIC
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* MetaMask Install Guide */}
-        {hasMetaMask === false && (
+        {/* NFT Status */}
+        {walletInfo && (
           <div className="mb-6">
-            <MetaMaskInstallGuide />
-          </div>
-        )}
-
-        {/* MATIC Balance & NFT Status */}
-        {walletAddress && hasMetaMask && (
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <MaticBalance walletAddress={walletAddress} />
             <NFTCreationStatus
               userId={user.uid}
-              walletAddress={walletAddress}
+              walletAddress={walletInfo.address}
               refreshTrigger={refreshTrigger}
             />
           </div>
         )}
 
         {/* Stats Overview */}
-        {walletAddress && hasMetaMask && <NFTStats userId={user.uid} />}
+        {walletInfo && <NFTStats userId={user.uid} />}
 
-        {/* Main Navigation - Only show if MetaMask is available */}
-        {hasMetaMask && (
+        {/* Main Navigation */}
+        {walletInfo && (
         <div className="mb-8">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto bg-black/20 border border-purple-500/30 p-1">
@@ -245,7 +230,7 @@ export default function Dashboard({ user }: DashboardProps) {
               </div>
               <CreateNFTForm
                 userId={user.uid}
-                walletAddress={walletAddress}
+                walletAddress={walletInfo?.address || ""}
                 onSuccess={handleNFTCreated}
               />
             </TabsContent>
@@ -265,13 +250,13 @@ export default function Dashboard({ user }: DashboardProps) {
                   <h3 className="text-lg font-semibold text-purple-400 mb-4">Your Collection</h3>
                   <NFTGallery
                     userId={user.uid}
-                    walletAddress={walletAddress}
+                    walletAddress={walletInfo?.address || ""}
                     refreshTrigger={refreshTrigger}
                   />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-purple-400 mb-4">Transfer Assets</h3>
-                  <TransferNFT userId={user.uid} walletAddress={walletAddress} />
+                  <TransferNFT userId={user.uid} walletAddress={walletInfo?.address || ""} />
                 </div>
               </div>
             </TabsContent>
@@ -288,7 +273,7 @@ export default function Dashboard({ user }: DashboardProps) {
               </div>
               <TransactionHistory
                 userId={user.uid}
-                walletAddress={walletAddress || ""}
+                walletAddress={walletInfo?.address || ""}
                 refreshTrigger={refreshTrigger}
               />
             </TabsContent>

@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
+import QueryProvider from "@/components/providers/query-provider"
 
 export const metadata: Metadata = {
   title: "NFT Marketplace",
@@ -19,8 +20,10 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="font-sans antialiased">
-        {children}
-        <Toaster />
+        <QueryProvider>
+          {children}
+          <Toaster />
+        </QueryProvider>
       </body>
     </html>
   )
