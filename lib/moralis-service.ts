@@ -229,3 +229,62 @@ export const createEventStream = async (contractAddress: string) => {
     throw error
   }
 }
+
+// Get NFT transfer events from Moralis
+export const getNFTTransferEvents = async (contractAddress: string, walletAddress?: string) => {
+  try {
+    await initializeMoralis()
+
+    const chainHex = `0x${Number(MORALIS_CONFIG.chainId).toString(16)}`
+
+    // Get NFT transfers for the contract
+    const response = await Moralis.EvmApi.nft.getNFTContractTransfers({
+      address: contractAddress,
+      chain: chainHex,
+      limit: 100,
+    })
+
+    let transfers = response?.toJSON()?.result || []
+
+    // Filter by wallet address if provided
+    if (walletAddress) {
+      transfers = transfers.filter((transfer: any) =>
+        transfer.from_address?.toLowerCase() === walletAddress.toLowerCase() ||
+        transfer.to_address?.toLowerCase() === walletAddress.toLowerCase()
+      )
+    }
+
+    // Map to our transaction format
+    return transfers.map((transfer: any) => ({
+      transactionHash: transfer.transaction_hash,
+      blockNumber: transfer.block_number,
+      tokenId: transfer.token_id,
+      from: transfer.from_address,
+      to: transfer.to_address,
+      type: transfer.from_address === "0x0000000000000000000000000000000000000000" ? "mint" : "transfer",
+      timestamp: transfer.block_timestamp,
+      status: "confirmed"
+    }))
+  } catch (error) {
+    console.error("Error fetching NFT transfer events:", error)
+    return []
+  }
+}
+
+// Get transaction details from Moralis
+export const getMoralisTransactionDetails = async (transactionHash: string) => {
+  try {
+    await initializeMoralis()
+
+    const chainHex = `0x${Number(MORALIS_CONFIG.chainId).toString(16)}`
+    const response = await Moralis.EvmApi.transaction.getTransaction({
+      transactionHash,
+      chain: chainHex,
+    })
+
+    return response?.toJSON() || null
+  } catch (error) {
+    console.error("Error fetching transaction details:", error)
+    return null
+  }
+}

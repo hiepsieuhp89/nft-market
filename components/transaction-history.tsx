@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { getTransactionHistory } from "@/lib/transaction-service"
+import { getNFTTransferEvents } from "@/lib/moralis-service"
+import { CONTRACT_CONFIG } from "@/lib/contract-config"
 import { Loader2, ExternalLink, Coins, Send, Plus, Clock } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale"
@@ -37,14 +39,55 @@ export default function TransactionHistory({ userId, walletAddress, refreshTrigg
   const fetchTransactions = async () => {
     try {
       console.log("Fetching transactions for:", { userId, walletAddress })
-      const history = await getTransactionHistory(userId, walletAddress)
-      console.log("Fetched transactions:", history)
-      // Map TransactionRecord to Transaction interface
-      const mappedTransactions = history.map(tx => ({
+
+      // Get transactions from both sources
+      const [firestoreTransactions, moralisEvents] = await Promise.all([
+        getTransactionHistory(userId, walletAddress),
+        getNFTTransferEvents(CONTRACT_CONFIG.address, walletAddress).catch(() => [])
+      ])
+
+      console.log("Firestore transactions:", firestoreTransactions)
+      console.log("Moralis events:", moralisEvents)
+
+      // Map Firestore transactions
+      const mappedFirestoreTransactions = firestoreTransactions.map(tx => ({
         ...tx,
         id: tx.id || ""
       }))
-      setTransactions(mappedTransactions)
+
+      // Merge and deduplicate transactions
+      const allTransactions = [...mappedFirestoreTransactions]
+
+      // Add Moralis events that aren't already in Firestore
+      moralisEvents.forEach((event: any) => {
+        const exists = mappedFirestoreTransactions.some(tx => tx.transactionHash === event.transactionHash)
+        if (!exists) {
+          allTransactions.push({
+            id: event.transactionHash,
+            userId: userId,
+            walletAddress: walletAddress,
+            type: event.type,
+            tokenId: event.tokenId,
+            transactionHash: event.transactionHash,
+            blockNumber: event.blockNumber,
+            gasUsed: "0", // Moralis doesn't provide gas info in transfers
+            from: event.from,
+            to: event.to,
+            timestamp: event.timestamp ? new Date(event.timestamp) : new Date(),
+            status: event.status,
+            nftName: `NFT #${event.tokenId}`
+          })
+        }
+      })
+
+      // Sort by timestamp (newest first)
+      allTransactions.sort((a, b) => {
+        const timeA = a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp
+        const timeB = b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp
+        return new Date(timeB).getTime() - new Date(timeA).getTime()
+      })
+
+      setTransactions(allTransactions)
     } catch (error) {
       console.error("Error fetching transaction history:", error)
     }
