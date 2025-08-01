@@ -5,12 +5,12 @@
   
   # Output directory
   publish = ".next"
-  
-  # Node.js version
-  environment = { NODE_VERSION = "18" }
 
 # Environment variables for production
 [build.environment]
+  # Node.js version
+  NODE_VERSION = "18"
+  
   # Backend API URL
   NEXT_PUBLIC_API_URL = "https://nft-market-api.netlify.app/api"
   

@@ -2,11 +2,15 @@
 [build]
   # Build command for NestJS
   command = "pnpm run build"
-  
+
   # Functions directory
-  functions = "dist"
-  
+  functions = "netlify/functions"
+
   # Node.js version and environment variables
+
+# Plugin to auto-install function dependencies
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
 [build.environment]
   NODE_VERSION = "18"
   # Server Configuration
