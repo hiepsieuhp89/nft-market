@@ -1,94 +1,85 @@
-// Netlify Function wrapper for NestJS backend
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from '../../src/app.module';
+// Simple Netlify Function for API endpoints
 import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 
-let app: any;
-
-async function createNestApp() {
-  if (!app) {
-    app = await NestFactory.create(AppModule);
-
-    // Enable CORS
-    app.enableCors({
-      origin: [
-        process.env.FRONTEND_URL || 'https://nft-market-tuna.netlify.app',
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:5173',
-        'http://localhost:4200',
-      ],
-      credentials: true,
-    });
-
-    // Global validation pipe
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-
-    // Global prefix
-    app.setGlobalPrefix('api');
-
-    // Swagger documentation
-    const config = new DocumentBuilder()
-      .setTitle('NFT Marketplace API')
-      .setDescription('Backend API for NFT Marketplace with OpenZeppelin Defender integration')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-    
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-
-    await app.init();
-  }
-  return app;
-}
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Content-Type': 'application/json',
+};
 
 export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: '',
+    };
+  }
+
   try {
-    const app = await createNestApp();
-    
-    // Convert Netlify event to Express-like request
-    const request = {
-      method: event.httpMethod,
-      url: event.path,
-      headers: event.headers,
-      body: event.body,
-      query: event.queryStringParameters || {},
+    const path = event.path.replace('/.netlify/functions/api', '');
+    const method = event.httpMethod;
+
+    // Simple routing
+    if (path === '/health' && method === 'GET') {
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          status: 'ok',
+          message: 'NFT Marketplace API is running',
+          timestamp: new Date().toISOString(),
+        }),
+      };
+    }
+
+    if (path === '/docs' && method === 'GET') {
+      return {
+        statusCode: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+        body: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>NFT Marketplace API</title>
+          </head>
+          <body>
+            <h1>NFT Marketplace API</h1>
+            <p>API is running on Netlify Functions</p>
+            <ul>
+              <li><a href="/.netlify/functions/api/health">Health Check</a></li>
+              <li><a href="/.netlify/functions/api/auth">Auth Endpoints</a></li>
+              <li><a href="/.netlify/functions/api/nft">NFT Endpoints</a></li>
+            </ul>
+          </body>
+          </html>
+        `,
+      };
+    }
+
+    // Default response for unhandled routes
+    return {
+      statusCode: 404,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        error: 'Not Found',
+        message: `Route ${method} ${path} not found`,
+        availableRoutes: ['/health', '/docs'],
+      }),
     };
 
-    // Process request through NestJS
-    const response = await app.getHttpAdapter().getInstance()(request);
-    
-    return {
-      statusCode: response.statusCode || 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      },
-      body: JSON.stringify(response.body || response),
-    };
   } catch (error) {
-    console.error('Netlify function error:', error);
-    
+    console.error('Function error:', error);
+
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: corsHeaders,
       body: JSON.stringify({
         error: 'Internal Server Error',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'An unexpected error occurred',
       }),
     };
   }

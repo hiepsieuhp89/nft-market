@@ -53,6 +53,7 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@netlify/functions": "^2.8.1",
     "@nestjs/cli": "^11.0.9",
     "@nestjs/testing": "^11.1.5",
     "@types/bcryptjs": "^3.0.0",
