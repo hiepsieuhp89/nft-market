@@ -23,8 +23,8 @@ exports.handler = async function(event) {
   const { request } = event;
   
   try {
-    // Parse request body
-    const body = JSON.parse(request.body);
+    // Parse request body - handle both string and object
+    const body = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
     const { action, to, tokenURI, price } = body;
     
     if (action !== 'mint') {
@@ -58,9 +58,11 @@ exports.handler = async function(event) {
 
     // Call mint function
     console.log(`Minting NFT for ${to} with URI ${tokenURI} and price ${price}`);
-    
+
     const tx = await contract.mintNFT(to, tokenURI, priceInWei, {
       gasLimit: 500000, // Set appropriate gas limit
+      maxFeePerGas: ethers.utils.parseUnits('50', 'gwei'), // 50 gwei
+      maxPriorityFeePerGas: ethers.utils.parseUnits('30', 'gwei'), // 30 gwei tip
     });
 
     console.log(`Transaction sent: ${tx.hash}`);

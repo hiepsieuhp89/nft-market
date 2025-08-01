@@ -40,6 +40,7 @@ export class DefenderService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'NFT-Marketplace-Backend/1.0',
         },
         body: JSON.stringify({
           action: 'mint',
