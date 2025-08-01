@@ -11,8 +11,8 @@
   # Node.js version
   NODE_VERSION = "18"
   
-  # Backend API URL
-  NEXT_PUBLIC_API_URL = "https://nft-market-api.netlify.app/api"
+  # Backend API URL - will be deployed separately
+  NEXT_PUBLIC_API_URL = "https://your-backend-url.com/api"
   
   # Blockchain Configuration
   NEXT_PUBLIC_CONTRACT_ADDRESS = "0x5B8c37aBdd3Dc72874d20a9403549798309599b5"
@@ -47,6 +47,4 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Functions for Netlify Edge (optional)
-[functions]
-  directory = "netlify/functions"
+# No Netlify Functions - backend deployed separately
