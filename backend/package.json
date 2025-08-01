@@ -4,7 +4,8 @@
   "description": "NFT Marketplace Backend API with OpenZeppelin Defender integration",
   "main": "dist/main.js",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && npm run build:netlify",
+    "build:netlify": "cp -r netlify dist/ && cp package.json dist/",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "dev": "nest start --watch",
