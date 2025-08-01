@@ -79,32 +79,12 @@ export default function Dashboard({ user }: DashboardProps) {
             {walletInfo && (
               <CreateNFTModal userId={user.uid} walletAddress={walletInfo.address} />
             )}
-            {walletInfo && (
-              <Button
-                onClick={copyWalletAddress}
-                variant="outline"
-                size="sm"
-                className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10"
-              >
-                {copiedAddress ? (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy Wallet
-                  </>
-                )}
-              </Button>
-            )}
-            {walletAddress && (
+            {walletInfo?.address && (
               <div className="flex items-center gap-2">
                 <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg">
                   <Wallet className="h-4 w-4 text-purple-400" />
                   <code className="text-purple-300 text-sm font-mono">
-                    {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    {walletInfo.address.slice(0, 6)}...{walletInfo.address.slice(-4)}
                   </code>
                 </div>
                 <Button

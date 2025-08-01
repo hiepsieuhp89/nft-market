@@ -1,5 +1,5 @@
 // API service for backend communication with React Query
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081/api';
 
 export interface User {
   uid: string;

@@ -8,7 +8,12 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      'http://localhost:3001', // Additional frontend port
+      'http://localhost:5173', // Vite dev server
+      'http://localhost:4200', // Angular dev server
+    ],
     credentials: true,
   });
 
@@ -21,21 +26,21 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger documentation
+  // Global prefix (set first)
+  app.setGlobalPrefix('api');
+
+  // Swagger documentation (after global prefix)
   const config = new DocumentBuilder()
     .setTitle('NFT Marketplace API')
     .setDescription('Backend API for NFT Marketplace with OpenZeppelin Defender integration')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  // Global prefix
-  app.setGlobalPrefix('api');
-
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 8081;
   await app.listen(port);
   
   console.log(`🚀 NFT Marketplace Backend is running on: http://localhost:${port}`);
